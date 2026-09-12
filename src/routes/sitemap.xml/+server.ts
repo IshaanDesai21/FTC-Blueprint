@@ -11,30 +11,22 @@ export async function GET() {
 		'',
 		'/complete-rookie-guide',
 		'/software',
-		'/hardware',
-		'/outreach',
+		'/review',
 		'/suggest',
-		'/editor',
 		'/simulators/pid',
-		'/simulators/feedforward',
-		'/simulators/motionprofile',
-		'/simulators/pid-game',
 		'/simulators/mecanum'
 	];
 
-	// Only index released guides
 	const releasedPosts = posts.filter(
-		(p) => !p.meta.tags?.includes('coming soon') && p.slug !== 'complete-rookie-guide'
+		(p) =>
+			(p.meta.tags || []).includes('completed') &&
+			(p.meta.tags || []).includes('software') &&
+			p.slug !== 'complete-rookie-guide'
 	);
 
 	const allUrls = [
 		...pages.map((p) => `${SITE_URL}${p}`),
-		...releasedPosts.map((p) => {
-			let section = 'software';
-			if (p.meta.tags?.includes('hardware')) section = 'hardware';
-			else if (p.meta.tags?.includes('outreach')) section = 'outreach';
-			return `${SITE_URL}/${section}/${p.slug}`;
-		})
+		...releasedPosts.map((p) => `${SITE_URL}/software/${p.slug}`)
 	];
 
 	const xml = `<?xml version="1.0" encoding="UTF-8" ?>

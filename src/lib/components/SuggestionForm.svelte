@@ -199,8 +199,8 @@
 	}
 
 	.submit-btn:hover {
-		transform: translateY(-2px);
-		box-shadow: var(--glow-green);
+		transform: none;
+		box-shadow: none;
 		filter: brightness(1.1);
 	}
 

@@ -2,23 +2,17 @@
 title: Drivetrain Functions
 panelCategory: "Encoder Based"
 date: 2026-06-10
-description: Essential drivetrain functions for autonomous control using encoders.
+description: Reusable driveForward, strafeRight, and turnRight methods using encoders.
 tags: [software, auto, intermediate, completed]
 author: Blueprint
 published: true
 ---
 
-# Drivetrain Functions
+Setting four target positions, four modes, and four powers for every move gets long. Wrap it in methods so the autonomous reads as a list of moves.
 
-Once you understand the basics of encoder-based movement, the next step is organizing your code so you are not rewriting the same motor setup over and over. The solution is helper functions. Instead of copying six lines of encoder code every time you want to drive forward, you call one method: `driveForward(24, 0.5)`. Clean, readable, and much easier to debug.
+## Brake mode
 
-This guide walks through how to build a complete set of drivetrain functions for a mecanum robot.
-
----
-
-## Setting Up ZeroPowerBehavior
-
-Before writing any movement functions, add this to your initialization. Setting motors to `BRAKE` mode means they actively resist movement when power is cut, instead of coasting to a stop. For autonomous, this gives you more precise stopping.
+Set `BRAKE` on all drive motors during init so the robot stops instead of coasting past the target.
 
 ```java
 frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -27,32 +21,21 @@ backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 ```
 
----
+## Ticks per inch
 
-## Ticks Per Inch: Calibrate Your Own Value
+Ticks per inch depends on encoder resolution, gear ratio, and wheel diameter. A 312 RPM goBILDA motor on a 96 mm wheel is about 45. Measure it:
 
-Every drivetrain is a little different. Ticks per inch depends on three things: the motor's encoder resolution, the gear ratio, and the wheel diameter. A rough starting estimate for goBILDA 312 RPM motors with 96mm mecanum wheels is about 45 to 48 ticks per inch.
-
-That estimate gets you close, but you should calibrate the real value for your robot. Here is how:
-
-1. Mark a start position on the floor.
-2. Command the robot to drive exactly 48 inches using your current `TICKS_PER_INCH` value.
-3. Measure how far it actually traveled.
-4. Adjust the value using this formula: `new value = (48 / actual inches) * current TICKS_PER_INCH`
-5. Repeat until the robot consistently hits 48 inches.
-
-Put this constant near the top of your OpMode class:
+1. Mark the start position.
+2. Command 48 inches with the current constant.
+3. Measure the actual distance.
+4. New constant = `(48 / actual) * old constant`.
+5. Repeat until it is within half an inch.
 
 ```java
-// Calibrate this value for your specific robot!
 static final double TICKS_PER_INCH = 45.0;
 ```
 
----
-
-## The Helper Utility Methods
-
-Every drivetrain function uses two private helper methods to set the mode and power of all four motors at once. Define these once and call them everywhere.
+## Helpers
 
 ```java
 private void setAllRunMode(DcMotor.RunMode mode) {
@@ -70,15 +53,13 @@ private void setAllPower(double power) {
 }
 ```
 
----
-
 ## driveForward
 
-For a mecanum drivetrain, driving forward means all four motors spin in the same direction. Passing a negative `inches` value drives backward.
+All four motors move the same direction. Negative inches drives backward.
 
 ```java
 public void driveForward(double inches, double power) {
-    int ticks = (int)(inches * TICKS_PER_INCH);
+    int ticks = (int) (inches * TICKS_PER_INCH);
 
     frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + ticks);
     frontRight.setTargetPosition(frontRight.getCurrentPosition() + ticks);
@@ -88,8 +69,8 @@ public void driveForward(double inches, double power) {
     setAllRunMode(DcMotor.RunMode.RUN_TO_POSITION);
     setAllPower(power);
 
-    while (opModeIsActive() && (frontLeft.isBusy() && frontRight.isBusy())) {
-        telemetry.addData("Driving forward", "%.1f inches", inches);
+    while (opModeIsActive() && frontLeft.isBusy() && frontRight.isBusy()) {
+        telemetry.addData("Driving", "%.1f in", inches);
         telemetry.update();
     }
 
@@ -98,19 +79,17 @@ public void driveForward(double inches, double power) {
 }
 ```
 
-Notice the use of `getCurrentPosition() + ticks` rather than just `ticks`. This makes the target relative to wherever the motor currently is, which is important because encoder counts accumulate across multiple movements in the same run.
-
----
+Targets are `getCurrentPosition() + ticks`, so each move is relative to where the motor is now. The counts keep accumulating across moves and that is fine.
 
 ## strafeRight
 
-Strafing on a mecanum drivetrain works by running diagonal pairs of wheels in opposite directions. For strafing right, the front-left and back-right motors go forward, while the front-right and back-left motors go backward.
+Front left and back right drive forward, front right and back left drive backward.
 
-Strafing with encoders is less accurate than forward and backward movement. The mecanum rollers slip sideways under load, so the same number of ticks covers slightly different distances depending on floor surface and robot weight. A correction factor of about 1.1 helps compensate, but you should still calibrate this for your robot. For high-precision strafing, consider a dedicated odometry wheel instead.
+Strafing is less accurate than driving. The rollers slip sideways, so the same ticks cover a shorter distance. The `1.1` factor compensates for that. Measure it seperately from the forward constant.
 
 ```java
 public void strafeRight(double inches, double power) {
-    int ticks = (int)(inches * TICKS_PER_INCH * 1.1); // strafe correction factor
+    int ticks = (int) (inches * TICKS_PER_INCH * 1.1);
 
     frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + ticks);
     frontRight.setTargetPosition(frontRight.getCurrentPosition() - ticks);
@@ -120,8 +99,8 @@ public void strafeRight(double inches, double power) {
     setAllRunMode(DcMotor.RunMode.RUN_TO_POSITION);
     setAllPower(power);
 
-    while (opModeIsActive() && (frontLeft.isBusy() && frontRight.isBusy())) {
-        telemetry.addData("Strafing right", "%.1f inches", inches);
+    while (opModeIsActive() && frontLeft.isBusy() && frontRight.isBusy()) {
+        telemetry.addData("Strafing", "%.1f in", inches);
         telemetry.update();
     }
 
@@ -130,24 +109,19 @@ public void strafeRight(double inches, double power) {
 }
 ```
 
-To strafe left, pass a negative `inches` value.
+Negative inches strafes left.
 
----
+## turnRight
 
-## turnRight (and Why the IMU Is Better)
+Left side forward, right side backward. Ticks per degree depends on the track width and the wheels, so measure it: command 90 degrees, measure the actual angle, and scale.
 
-Turning with encoders works by running the left-side motors forward and the right-side motors backward. However, turning by encoder ticks is less reliable than the other movements. The turning radius changes based on how the robot is loaded, and there is no way to correct for drift mid-turn without additional sensors.
-
-For turning, the IMU (the built-in gyroscope in your Control Hub) gives you far more accurate results. It measures actual rotation angle instead of guessing from wheel ticks. A dedicated IMU turning guide covers that method in depth.
-
-That said, here is a simple encoder-based turn if you need a quick starting point:
+Encoder turns drift because the wheels scrub during a turn. For turns that matter, use the [IMU](/software/sensors-imu) heading instead and turn until the measured angle reaches the target.
 
 ```java
-// Rough ticks-per-degree for a mecanum robot. Calibrate this for your robot!
 static final double TICKS_PER_DEGREE = 5.7;
 
 public void turnRight(double degrees, double power) {
-    int ticks = (int)(degrees * TICKS_PER_DEGREE);
+    int ticks = (int) (degrees * TICKS_PER_DEGREE);
 
     frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + ticks);
     frontRight.setTargetPosition(frontRight.getCurrentPosition() - ticks);
@@ -157,8 +131,8 @@ public void turnRight(double degrees, double power) {
     setAllRunMode(DcMotor.RunMode.RUN_TO_POSITION);
     setAllPower(power);
 
-    while (opModeIsActive() && (frontLeft.isBusy() || frontRight.isBusy())) {
-        telemetry.addData("Turning right", "%.1f degrees", degrees);
+    while (opModeIsActive() && frontLeft.isBusy() && frontRight.isBusy()) {
+        telemetry.addData("Turning", "%.1f deg", degrees);
         telemetry.update();
     }
 
@@ -167,22 +141,22 @@ public void turnRight(double degrees, double power) {
 }
 ```
 
-The `TICKS_PER_DEGREE` value varies a lot between robots. Measure it by commanding a 90-degree turn and seeing how far the robot actually rotates, then adjust. For critical turns in competition, use the IMU instead.
-
----
-
-## Full Example OpMode
-
-Here is everything put together in a complete autonomous OpMode. This routine drives forward, strafes right, and turns before driving forward once more.
+## Full OpMode
 
 ```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
 @Autonomous(name = "Encoder Drivetrain Auto")
 public class EncoderDrivetrainAuto extends LinearOpMode {
 
     DcMotor frontLeft, frontRight, backLeft, backRight;
 
-    static final double TICKS_PER_INCH   = 45.0;  // calibrate this!
-    static final double TICKS_PER_DEGREE = 5.7;   // calibrate this!
+    static final double TICKS_PER_INCH   = 45.0;
+    static final double TICKS_PER_DEGREE = 5.7;
 
     @Override
     public void runOpMode() {
@@ -191,34 +165,27 @@ public class EncoderDrivetrainAuto extends LinearOpMode {
         backLeft   = hardwareMap.get(DcMotor.class, "backLeft");
         backRight  = hardwareMap.get(DcMotor.class, "backRight");
 
-        // Reverse left side motors (adjust for your wiring)
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         backLeft.setDirection(DcMotor.Direction.REVERSE);
 
-        // Brake mode for more precise stopping
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        // Reset encoders
         setAllRunMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setAllRunMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        telemetry.addData("Status", "Ready");
-        telemetry.update();
-
         waitForStart();
 
-        // Run the autonomous routine
-        driveForward(24, 0.5);  // drive forward 24 inches
-        strafeRight(12, 0.4);  // strafe right 12 inches
-        turnRight(90, 0.4);    // turn right 90 degrees (consider IMU for better accuracy)
-        driveForward(12, 0.5); // drive forward another 12 inches
+        driveForward(24, 0.5);
+        strafeRight(12, 0.4);
+        turnRight(90, 0.4);
+        driveForward(12, 0.5);
     }
 
     public void driveForward(double inches, double power) {
-        int ticks = (int)(inches * TICKS_PER_INCH);
+        int ticks = (int) (inches * TICKS_PER_INCH);
 
         frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + ticks);
         frontRight.setTargetPosition(frontRight.getCurrentPosition() + ticks);
@@ -228,8 +195,8 @@ public class EncoderDrivetrainAuto extends LinearOpMode {
         setAllRunMode(DcMotor.RunMode.RUN_TO_POSITION);
         setAllPower(power);
 
-        while (opModeIsActive() && (frontLeft.isBusy() && frontRight.isBusy())) {
-            telemetry.addData("Driving forward", "%.1f inches", inches);
+        while (opModeIsActive() && frontLeft.isBusy() && frontRight.isBusy()) {
+            telemetry.addData("Driving", "%.1f in", inches);
             telemetry.update();
         }
 
@@ -238,7 +205,7 @@ public class EncoderDrivetrainAuto extends LinearOpMode {
     }
 
     public void strafeRight(double inches, double power) {
-        int ticks = (int)(inches * TICKS_PER_INCH * 1.1);
+        int ticks = (int) (inches * TICKS_PER_INCH * 1.1);
 
         frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + ticks);
         frontRight.setTargetPosition(frontRight.getCurrentPosition() - ticks);
@@ -248,8 +215,8 @@ public class EncoderDrivetrainAuto extends LinearOpMode {
         setAllRunMode(DcMotor.RunMode.RUN_TO_POSITION);
         setAllPower(power);
 
-        while (opModeIsActive() && (frontLeft.isBusy() && frontRight.isBusy())) {
-            telemetry.addData("Strafing right", "%.1f inches", inches);
+        while (opModeIsActive() && frontLeft.isBusy() && frontRight.isBusy()) {
+            telemetry.addData("Strafing", "%.1f in", inches);
             telemetry.update();
         }
 
@@ -258,7 +225,7 @@ public class EncoderDrivetrainAuto extends LinearOpMode {
     }
 
     public void turnRight(double degrees, double power) {
-        int ticks = (int)(degrees * TICKS_PER_DEGREE);
+        int ticks = (int) (degrees * TICKS_PER_DEGREE);
 
         frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + ticks);
         frontRight.setTargetPosition(frontRight.getCurrentPosition() - ticks);
@@ -268,8 +235,8 @@ public class EncoderDrivetrainAuto extends LinearOpMode {
         setAllRunMode(DcMotor.RunMode.RUN_TO_POSITION);
         setAllPower(power);
 
-        while (opModeIsActive() && (frontLeft.isBusy() || frontRight.isBusy())) {
-            telemetry.addData("Turning right", "%.1f degrees", degrees);
+        while (opModeIsActive() && frontLeft.isBusy() && frontRight.isBusy()) {
+            telemetry.addData("Turning", "%.1f deg", degrees);
             telemetry.update();
         }
 
@@ -293,12 +260,9 @@ public class EncoderDrivetrainAuto extends LinearOpMode {
 }
 ```
 
----
+## Notes
 
-## Key Takeaways
-
-- Always calibrate `TICKS_PER_INCH` on your actual robot. The default value is just a starting point.
-- Use `getCurrentPosition() + ticks` so movement targets are relative, not absolute.
-- Strafing accuracy is lower than forward and backward movement. Calibrate the correction factor separately and expect it to vary by surface.
-- For turning, the IMU gives more reliable results than encoder counts. Use encoder turns only as a fallback.
-- The next guide covers subsystem functions, so you can control arms, claws, and slides with the same clean helper-function pattern.
+- Measure `TICKS_PER_INCH` and `TICKS_PER_DEGREE` on the real robot. The values above are placeholders.
+- Use relative targets so moves chain correctly.
+- Strafe distance changes with floor surface. Re-check it on the competition field.
+- These moves block until done. The robot cannot run a mechanism at the same time as a drive move with this pattern.

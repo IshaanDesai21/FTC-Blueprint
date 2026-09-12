@@ -57,7 +57,7 @@
 		flex-shrink: 0;
 		width: 64px;
 		height: 64px;
-		border-radius: 22%;
+		border-radius: 0;
 		border: 1px solid var(--border-subtle);
 		box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
 	}

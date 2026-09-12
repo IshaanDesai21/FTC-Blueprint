@@ -21,7 +21,7 @@
 
 <svelte:head>
 	<title>Review | Blueprint</title>
-	<meta name="description" content="Get expert feedback on your code, CAD, or engineering portfolio from the Blueprint team." />
+	<meta name="description" content="Free code, CAD, and engineering portfolio reviews for FTC teams." />
 </svelte:head>
 
 <!-- Hero -->
@@ -29,10 +29,10 @@
 	<div class="container">
 		<div class="hero-inner animate-fade-up">
 			<div class="hero-text">
-				<h1>Get Feedback!</h1>
+				<h1>Get a Free Review</h1>
 				<p class="sub">
-					Submit your code, CAD, or engineering portfolio and our team will give you detailed,
-					actionable feedback - free for all FTC teams.
+					Submit your code, CAD, or engineering portfolio and we will send back written feedback.
+					Free for all FTC teams.
 				</p>
 			</div>
 			<div class="hero-badges">
@@ -144,7 +144,7 @@
 	}
 
 	.hero-badge:hover {
-		transform: translateX(5px);
+		transform: none;
 		border-color: var(--accent-cyan);
 		background: var(--bg-secondary);
 	}

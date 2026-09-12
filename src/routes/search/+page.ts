@@ -1,8 +1,6 @@
-import { getAllPosts } from '$lib/utils/posts';
-
 export const prerender = false;
 
-export async function load() {
-	const posts = await getAllPosts();
-	return { posts };
+export async function load({ parent }) {
+	const { allPosts } = await parent();
+	return { posts: allPosts };
 }

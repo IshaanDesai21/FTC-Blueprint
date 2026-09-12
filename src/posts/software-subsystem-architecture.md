@@ -2,21 +2,17 @@
 title: Subsystem Architecture and Code Organization
 panelCategory: "Basics"
 date: 2026-06-29
-description: How to structure FTC robot code into subsystems so it stays readable as it grows.
+description: Splitting robot code into one class per mechanism.
 tags: [software, intermediate, completed]
 author: Blueprint
 published: true
 ---
 
-A lot of FTC teams start the season with a single, giant OpMode file that directly controls every motor and servo inline. This works fine for a simple robot with two or three mechanisms, but it quickly becomes hard to read, hard to reuse between TeleOp and Autonomous, and hard to debug once a robot has five or six mechanisms with their own logic. Organizing code into subsystems fixes this.
+A single OpMode that controls every motor and servo directly works for a robot with two mechanisms. It stops working well once there are five, and once the same mechanism logic has to exist in both TeleOp and autonomous.
 
-## What a Subsystem Is
+## What a subsystem is
 
-A subsystem is a class that represents one physical mechanism on the robot, like the drivetrain, the intake, or the lift, and owns everything needed to control it: the motor and sensor objects, the methods to move it, and any internal state (like a target position) it needs to track.
-
-Instead of your OpMode directly calling `armMotor.setPower(0.5)`, it calls something like `arm.setPower(0.5)` or `arm.moveToPosition(HIGH)`, and the `Arm` class handles the actual hardware calls internally. This might seem like a small difference, but it changes a lot about how maintainable your code is.
-
-## A Simple Example
+A subsystem is a class for one mechanism. It owns the motors, servos, and sensors for that mechanism, and the methods that move it.
 
 ```java
 public class Intake {
@@ -40,21 +36,18 @@ public class Intake {
 }
 ```
 
-Now both your TeleOp and Autonomous OpModes can create an `Intake` object and call `intake()`, `outtake()`, or `stop()` without either one needing to know the actual motor name, port, or power values. If you later change how the intake works internally (add a sensor, change the power level, add a delay), you change it in one place, and every OpMode that uses `Intake` picks up the change automatically.
+TeleOp and autonomous both create an `Intake` and call `intake()`, `outtake()`, or `stop()`. Neither OpMode knows the motor name or the power values. Changing how the intake works is one edit in one file.
 
-## Why This Matters as Robots Get More Complex
+## Why
 
-**Reuse between OpModes.** Without subsystems, it's common to end up duplicating hardware setup and control logic between your TeleOp and Autonomous OpModes, then having them slowly drift out of sync as one gets updated and the other doesn't. With subsystems, both OpModes use the same class, so there's only one place for that logic to live.
+- **One copy of each mechanism's logic.** Without subsystems, TeleOp and autonomous each get their own copy and they drift apart.
+- **Easier debugging.** If the intake is wrong, the intake code is in one file.
+- **Easier testing.** A small OpMode can exercise one subsystem on its own.
+- **Parallel work.** Two programmers can work on `Intake` and `Lift` without editing the same file.
 
-**Easier debugging.** If the intake is misbehaving, you know exactly which file to look in. Without subsystems, intake logic might be scattered across multiple OpModes, each with slightly different implementations.
+## Robot class
 
-**Testability.** It's much easier to test one subsystem in isolation (write a tiny OpMode that just exercises the `Arm` class) than to test a single giant OpMode that controls everything at once.
-
-**Clearer collaboration.** On a team with multiple programmers, subsystems let people work on different mechanisms without stepping on each other's code. One person can work on `Intake` while another works on `Drivetrain`, and they only need to coordinate at the point where the main OpMode uses both.
-
-## Structuring a Robot Class
-
-Many teams go one level further and create a `Robot` class that owns all the subsystems, so an OpMode just creates one `Robot` object instead of individually initializing every mechanism.
+Many teams add a `Robot` class that constructs every subsystem, so an OpMode makes one object.
 
 ```java
 public class Robot {
@@ -70,29 +63,54 @@ public class Robot {
 }
 ```
 
-An OpMode then looks like:
-
 ```java
 Robot robot = new Robot(hardwareMap);
-// later, in the loop:
+
+// in the loop
 robot.intake.intake();
 robot.lift.moveToPosition(Lift.Position.HIGH);
 ```
 
-This keeps the OpMode focused on high-level decisions (what should happen and when) while the subsystem classes handle the low-level details of how each mechanism actually works.
+The OpMode decides what happens and when. The subsystems handle how.
 
-## How Far to Take It
+## Subsystems with state
 
-Subsystems are a tool, not a rulebook. A very simple mechanism (a single servo that only ever opens and closes) might not need its own full class; a couple of well-named constants and a helper method might be enough. The value of a subsystem grows with the complexity of the mechanism it represents: more motors, more sensors, more internal state, or more places in the code that need to control it all make a dedicated subsystem more worthwhile.
+A mechanism that has to reach a position needs an `update()` method the OpMode calls every loop, so the subsystem can run its controller.
 
-Don't feel pressure to over-engineer a simple robot. The goal is code that's easy to read, easy to reuse, and easy to debug, not architecture for its own sake.
+```java
+public class Lift {
+    public enum Position { LOW, HIGH }
 
-## Common Mistakes
+    private DcMotor motor;
+    private int target = 0;
 
-**Giant OpModes with everything inline.** The clearest sign it's time to introduce subsystems is an OpMode file that's hundreds of lines long, mixing hardware setup, control logic, and driver input handling all in one place.
+    public Lift(HardwareMap hardwareMap) {
+        motor = hardwareMap.get(DcMotor.class, "liftMotor");
+    }
 
-**Subsystems that reach into each other's internals.** A subsystem should generally expose methods (`intake()`, `moveToPosition()`) rather than public raw motor objects that other code pokes at directly. This keeps the internal details of how a mechanism works contained to its own class.
+    public void moveToPosition(Position p) {
+        target = (p == Position.HIGH) ? 1800 : 0;
+    }
 
-**Duplicating hardware setup between TeleOp and Autonomous.** If you find yourself copying the same `hardwareMap.get(...)` calls into multiple OpModes, that's a strong signal those mechanisms belong in a shared subsystem class instead.
+    public void update() {
+        double error = target - motor.getCurrentPosition();
+        motor.setPower(error * 0.005);
+    }
 
-Organizing code into subsystems is one of the highest-leverage changes a team can make early in the season. It costs a bit of extra structure upfront, but it pays off every time you add a new mechanism, debug a problem, or bring a new programmer onto the team.
+    public boolean atTarget() {
+        return Math.abs(target - motor.getCurrentPosition()) < 20;
+    }
+}
+```
+
+The OpMode calls `robot.lift.update()` once per loop. It must not be skipped or the lift stops being controlled.
+
+## How far to go
+
+A single servo that opens and closes does not need its own class. Two constants and a method on the OpMode are enough. A mechanism with a motor, an encoder, a limit switch, and a target position does. The more a mechanism has to track, the more a class for it is worth it.
+
+## Mistakes
+
+- **Public motor fields.** If other code can call `lift.motor.setPower()` directly, the subsystem is not controlling anything. Expose methods, keep the hardware private.
+- **Copying `hardwareMap.get()` calls between OpModes.** That is the sign a subsystem is missing.
+- **Forgetting `update()`.** A subsystem with a controller does nothing if the OpMode never calls it.

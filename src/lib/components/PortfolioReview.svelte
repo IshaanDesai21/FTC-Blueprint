@@ -123,10 +123,7 @@
 	h2 {
 		font-size: 1.75rem;
 		margin: 0;
-		background: var(--gradient-accent);
-		-webkit-background-clip: text;
-		background-clip: text;
-		-webkit-text-fill-color: transparent;
+		color: var(--text-primary);
 	}
 
 	p {
@@ -141,13 +138,13 @@
 		padding: 0.75rem 1rem;
 		background: rgba(26, 122, 149, 0.08);
 		border-left: 3px solid var(--accent-cyan);
-		border-radius: 4px;
+		border-radius: 0;
 	}
 
 	.email-code {
 		background: var(--bg-secondary);
 		padding: 0.1rem 0.3rem;
-		border-radius: 3px;
+		border-radius: 0;
 		font-family: var(--font-mono);
 		font-size: 0.9em;
 		color: var(--accent-cyan);
@@ -205,7 +202,7 @@
 		margin-top: 0.25rem;
 	}
 
-	.btn-submit:hover { filter: brightness(1.1); transform: translateY(-1px); }
+	.btn-submit:hover { filter: brightness(1.1); transform: none; }
 	.btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
 	.success-message {
@@ -218,7 +215,7 @@
 		height: 44px;
 		background: var(--accent-green);
 		color: #000;
-		border-radius: 50%;
+		border-radius: 0;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;

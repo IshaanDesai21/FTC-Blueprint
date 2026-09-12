@@ -2,111 +2,138 @@
 title: Pinpoint Odometry Computer
 panelCategory: "Sensors"
 date: 2026-05-20
-description: How to use the pinpoint odometry computer in FTC
+description: Reading field position and heading from the goBILDA Pinpoint.
 published: true
 tags: [software, completed]
 author: Blueprint
 ---
 
-The goBILDA Pinpoint Odometry Computer is a small I2C device that gives your robot a very accurate sense of where it is on the field. Instead of guessing position from motor encoders (which slip and drift), the Pinpoint reads from two dedicated deadwheel pods, one for forward/back motion and one for left/right motion. It combines those readings and gives you X position, Y position, and heading all in one place.
+The goBILDA Pinpoint is an I2C device with two encoder ports and its own IMU. Plug two odometry pods into it and it reports X, Y, and heading. The hub reads one device instead of two encoders and the IMU, and the position math runs on the Pinpoint.
 
-## Why Use It?
+## Why odometry pods
 
-Motor encoders are fine for straight-line driving, but they lose accuracy fast when the robot strafes or turns. Deadwheels roll freely on the ground and don't slip like powered wheels do. The Pinpoint fuses both encoder readings so your robot always knows where it is, even after a bunch of turns. This makes autonomous routines way more reliable.
+Drive wheel encoders slip when the robot strafes or turns, so the position drifts. Odometry pods are unpowered wheels that roll on the floor and do not slip. One pod is mounted to measure forward and back motion, the other to measure left and right.
 
 ## Wiring
 
-Plug the Pinpoint into any I2C port on the Control Hub using the included cable. Then connect each deadwheel pod's encoder cable to the Pinpoint's encoder inputs. One pod goes in the forward/back direction (usually under the robot, pointing along the length), and the other goes side to side (pointing along the width). The pods themselves mount through holes in the drivetrain frame or on standoffs so the wheels drag on the ground at all times.
+- Plug the Pinpoint into an I2C port on the Control Hub.
+- Plug the forward pod into the X encoder port and the strafe pod into the Y encoder port.
+- Mount the pods so the wheels stay on the floor when the robot moves. Spring-loaded pods handle uneven tiles.
+- Add the Pinpoint to the robot configuration as an I2C device and name it `pinpoint`.
 
-Name the device `"pinpoint"` in the Robot Configuration on the Driver Hub.
+## Setup
 
-## Java Setup
-
-Add these imports to your OpMode:
+The driver class is `GoBildaPinpointDriver`. Recent SDK versions include it. If the import does not resolve, download the driver from goBILDA and put the file in `TeamCode`.
 
 ```java
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+
+GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+
+pinpoint.setOffsets(-84.0, -168.0, DistanceUnit.MM);
+pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+pinpoint.setEncoderDirections(
+    GoBildaPinpointDriver.EncoderDirection.FORWARD,
+    GoBildaPinpointDriver.EncoderDirection.FORWARD
+);
+pinpoint.resetPosAndIMU();
 ```
 
-Then declare and initialize the driver:
+Older standalone versions of the driver take the offsets in millimeters with no unit argument.
+
+**Offsets.** Measured from the robot's center of rotation.
+
+- X offset: how far the forward pod (X) sits to the side of center. Left is positive.
+- Y offset: how far the strafe pod (Y) sits ahead of center. Forward is positive.
+
+Wrong offsets show up as heading or position drift when the robot spins in place.
+
+**Encoder resolution.** Use `goBILDA_SWINGARM_POD` or `goBILDA_4_BAR_POD` to match the pods. For other wheels, `setEncoderResolution(double ticksPerMM)` takes the number directly.
+
+**Directions.** If X goes negative when the robot drives forward, or Y goes negative when it strafes left, set that pod to `REVERSED`.
+
+Call `resetPosAndIMU()` at init with the robot still. It zeros the position and calibrates the IMU, and takes a moment to finish.
+
+## Reading position
+
+Call `update()` once per loop, then read the pose.
 
 ```java
-GoBildaPinpointDriver pinpoint;
+package org.firstinspires.ftc.teamcode;
 
-@Override
-public void init() {
-    pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
-    // Set which direction each encoder counts positive
-    pinpoint.setEncoderDirections(
-        GoBildaPinpointDriver.EncoderDirection.FORWARD,
-        GoBildaPinpointDriver.EncoderDirection.FORWARD
-    );
+@TeleOp(name = "Pinpoint Test")
+public class PinpointTest extends LinearOpMode {
 
-    // Tell the Pinpoint what pod type you're using
-    pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+    @Override
+    public void runOpMode() {
+        GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
-    // Set the pod offsets from the robot's center (in millimeters)
-    pinpoint.setOffsets(-84.0, -168.0);
+        pinpoint.setOffsets(-84.0, -168.0, DistanceUnit.MM);
+        pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        pinpoint.setEncoderDirections(
+            GoBildaPinpointDriver.EncoderDirection.FORWARD,
+            GoBildaPinpointDriver.EncoderDirection.FORWARD
+        );
+        pinpoint.resetPosAndIMU();
 
-    // Reset position and IMU heading to zero
-    pinpoint.resetPosAndIMU();
+        waitForStart();
+
+        while (opModeIsActive()) {
+            pinpoint.update();
+            Pose2D pos = pinpoint.getPosition();
+
+            telemetry.addData("X (in)", "%.2f", pos.getX(DistanceUnit.INCH));
+            telemetry.addData("Y (in)", "%.2f", pos.getY(DistanceUnit.INCH));
+            telemetry.addData("Heading (deg)", "%.2f", pos.getHeading(AngleUnit.DEGREES));
+            telemetry.update();
+        }
+    }
 }
 ```
 
-## Pod Offsets
+Push the robot around by hand and watch the numbers. Forward should raise X, left should raise Y, and counter-clockwise rotation should raise heading. Fix any pod that reads backwards with `setEncoderDirections`.
 
-The offsets tell the Pinpoint how far each pod is from the robot's center of rotation. Measure this in millimeters. The X offset is how far the side-to-side pod sits forward or back from center, and the Y offset is how far the forward/back pod sits left or right from center. Getting these right matters. Bad offsets cause your heading to drift when you spin in place.
+## Driving to a position
 
-## Reading Position
-
-Call `pinpoint.update()` every loop cycle, then grab the position:
+Once position is known, a move is a loop that compares current position to a target.
 
 ```java
-@Override
-public void loop() {
-    pinpoint.update();
+double targetX = 24.0;
 
-    Pose2D pos = pinpoint.getPosition();
-
-    double x = pos.getX(DistanceUnit.MM);
-    double y = pos.getY(DistanceUnit.MM);
-    double heading = pos.getHeading(AngleUnit.DEGREES);
-
-    telemetry.addData("X (mm)", x);
-    telemetry.addData("Y (mm)", y);
-    telemetry.addData("Heading (deg)", heading);
-    telemetry.update();
-}
-```
-
-That's a complete TeleOp you can use to test the odometry. Drive the robot around and watch the numbers update in real time. If the signs are wrong (X goes negative when you drive forward), flip the encoder direction for that pod.
-
-## Resetting at Autonomous Start
-
-Always call `pinpoint.resetPosAndIMU()` in `init()` so the robot starts at (0, 0) with 0 degrees heading. If you skip this, the position carries over from the last run and your autonomous will drive to the wrong place.
-
-## Using It for Closed-Loop Autonomous
-
-Once you know where the robot is, you can drive to a target position by comparing current position to where you want to be:
-
-```java
-// Drive forward until X reaches 600mm
 while (opModeIsActive()) {
     pinpoint.update();
-    Pose2D pos = pinpoint.getPosition();
+    double x = pinpoint.getPosition().getX(DistanceUnit.INCH);
+    double error = targetX - x;
 
-    double error = 600.0 - pos.getX(DistanceUnit.MM);
+    if (Math.abs(error) < 0.5) break;
 
-    if (Math.abs(error) < 10.0) break; // close enough
-
-    double power = error * 0.003; // simple proportional control
-    drive.setMotorPowers(power, power, power, power);
+    double power = Math.max(-0.5, Math.min(0.5, error * 0.05));
+    frontLeft.setPower(power);
+    frontRight.setPower(power);
+    backLeft.setPower(power);
+    backRight.setPower(power);
 }
-drive.setMotorPowers(0, 0, 0, 0);
+
+frontLeft.setPower(0);
+frontRight.setPower(0);
+backLeft.setPower(0);
+backRight.setPower(0);
 ```
 
-This is the foundation of any decent autonomous routine. You can extend the same idea to Y position and heading to navigate anywhere on the field. Pair it with a full road-runner or custom PID controller for even smoother movement.
+The same idea extends to Y and heading with a controller for each one. Road Runner uses the Pinpoint as a localizer, so if you want full path following rather then single-axis moves, use that instead of writing your own.
+
+## Notes
+
+- Call `update()` exactly once per loop. Reading the position without calling `update()` returns the old value.
+- Reset position at the start of autonomous. Position carries over from whatever ran last.
+- Keep the pod wheels clean. Dust on the wheel changes the effective diameter and the distances go off.

@@ -4,21 +4,19 @@
 </script>
 
 <div class="error-page">
-	<div class="error-orb" aria-hidden="true"></div>
-
 	<div class="container">
 		<div class="error-content animate-fade-up">
 			<span class="status-code">{page.status}</span>
 
-			<h1>{page.status === 404 ? 'Page Lost in Orbit' : 'System Glitch'}</h1>
+			<h1>{page.status === 404 ? 'Page not found' : 'Something went wrong'}</h1>
 
 			<p>
-				{page.error?.message || 'Something went wrong while navigating the blueprint.'}
+				{page.error?.message || 'The page could not be loaded.'}
 			</p>
 
 			<div class="actions">
 				<a href="/" class="btn-primary">Return Home</a>
-				<a href="/software" class="btn-secondary">Browse Prints</a>
+				<a href="/software" class="btn-secondary">Browse Software</a>
 			</div>
 		</div>
 	</div>
@@ -35,16 +33,6 @@
 		padding: 4rem 1rem;
 	}
 
-	.error-orb {
-		position: absolute;
-		width: 600px;
-		height: 600px;
-		background: radial-gradient(circle, rgba(116, 215, 237, 0.1) 0%, transparent 70%);
-		filter: blur(60px);
-		z-index: -1;
-		animation: pulse-glow 8s ease-in-out infinite;
-	}
-
 	.error-content {
 		text-align: center;
 		max-width: 500px;
@@ -57,10 +45,7 @@
 		font-size: 8rem;
 		font-weight: 800;
 		line-height: 1;
-		background: var(--gradient-accent);
-		-webkit-background-clip: text;
-		background-clip: text;
-		-webkit-text-fill-color: transparent;
+		color: var(--text-primary);
 		opacity: 0.2;
 		margin-bottom: -2rem;
 	}
@@ -99,8 +84,8 @@
 	}
 
 	.btn-primary:hover {
-		transform: translateY(-2px);
-		box-shadow: var(--glow-cyan);
+		transform: none;
+		
 	}
 
 	.btn-secondary {

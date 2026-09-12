@@ -2,17 +2,15 @@
 title: Telemetry and Debugging Best Practices
 panelCategory: "Basics"
 date: 2026-06-30
-description: Practical ways to debug FTC robot code using telemetry, logging, and systematic isolation.
+description: Finding problems with telemetry, isolation, and Logcat.
 tags: [software, beginner, completed]
 author: Blueprint
 published: true
 ---
 
-A robot that isn't behaving the way you expect is one of the most common situations in FTC programming, and also one of the most frustrating if you don't have a systematic way to figure out what's actually going wrong. Telemetry is the main tool for this: it lets you see what your code thinks is happening in real time, instead of guessing.
+## Telemetry
 
-## What Telemetry Is
-
-Telemetry is data your robot sends back to the Driver Station screen while it's running. The FTC SDK makes this simple:
+Telemetry is text sent from the robot to the Driver Station screen.
 
 ```java
 telemetry.addData("Motor Power", motor.getPower());
@@ -20,52 +18,47 @@ telemetry.addData("Distance", distanceSensor.getDistance(DistanceUnit.CM));
 telemetry.update();
 ```
 
-This shows live values on the Driver Station during a match or test run, which is often the fastest way to answer the question "what is my code actually doing right now?"
+It is the fastest way to see what the code thinks is happening.
 
-## Using Telemetry to Debug
+## Debugging with telemetry
 
-The core debugging technique with telemetry is simple: print out the values you think should explain the behavior you're seeing, then compare what the robot reports against what you expected.
+Print the values that should explain the behavior, then compare them to what you expected.
 
-If an arm isn't moving to the right position, print its target position and its current encoder position. If they match but the arm still looks wrong, the problem is likely mechanical (slipping, binding) rather than in your code. If they don't match, the problem is in how your code is calculating or reaching the target.
+- An arm is not reaching its position. Print the target and the current encoder value. If they match, the problem is mechanical. If they do not, the problem is in the code.
+- A color sensor is not detecting a piece. Print the raw reading. That tells you if the sensor sees anything or if the threshold is wrong.
+- A button does nothing. Print the gamepad value. If it is true and nothing happens, the problem is after the read.
 
-If a sensor-based behavior isn't working (like a color sensor not detecting a game piece), print the raw sensor reading. This immediately tells you whether the sensor itself is reading something reasonable, or whether your code's threshold or logic for interpreting the reading is the problem.
+Adding two telemetry lines for the specific thing you are chasing is faster than reading the whole file.
 
-This kind of targeted telemetry, added specifically to investigate one problem, is usually much faster than trying to read through code and mentally simulate what it does.
+## Isolating the problem
 
-## Isolating the Problem
+- **One mechanism at a time.** Write a small OpMode that only runs the mechanism in question.
+- **Bisect.** Comment out half the logic and see if the rest works. Narrow it down from there.
+- **Check the value, don't assume it.** A lot of bugs are a value that was not what the programmer thought.
+- **Check hardware first.** A loose cable, a motor in the wrong port, or a wrong name in the configuration looks like a code bug.
 
-When something isn't working, it helps to narrow down where the problem actually is before trying to fix it. A few useful isolation techniques:
+## Logcat
 
-**Test one mechanism at a time.** Write a minimal OpMode that only exercises the one mechanism you're debugging, without the rest of the robot's code running at the same time. This removes the possibility that some other part of the code is interfering.
+Telemetry disappears when the OpMode stops. If the OpMode crashed, the stack trace is in Logcat. In Android Studio, open the Logcat tab while the Control Hub is connected over ADB. Filter by `RobotCore` or by your class name.
 
-**Bisect the code.** If you're not sure which part of a longer sequence of code is causing a problem, comment out or bypass the second half and see if the first half behaves correctly on its own. Repeat, narrowing down the range, until you've isolated the specific section causing the issue.
+`RobotLog.d("message")` writes to Logcat from your code. `System.out.println()` also shows up there. Use these for values that are to detailed for the Driver Station screen.
 
-**Check assumptions with telemetry, don't just trust them.** It's easy to assume a sensor is reading correctly, or that a value is what you think it is, without actually checking. Print it and look. A surprising number of bugs turn out to be a value that wasn't what the programmer assumed it was.
+## FTC Dashboard
 
-## FTC Dashboard for Deeper Debugging
+For graphs of values over time, and for changing constants without redeploying, use [FTC Dashboard](/software/ftc-dashboard).
 
-For more involved debugging, especially anything involving live-tuned values (like PID constants) or visualizing a robot's path in real time, FTC Dashboard extends basic telemetry with graphs, field visualization, and live variable tuning without needing to redeploy code for every change. See the dedicated FTC Dashboard guide for setup and usage details.
+## Intermittent bugs
 
-## Logcat and Android Studio Debugging
+- Log the normal case too, so good runs and bad runs can be compared.
+- Write down the conditions when it happens: battery voltage, what the driver pressed, where the robot was.
+- If it happens at low battery, the hub may be browning out under load. Check the voltage in telemetry.
 
-Telemetry is great for values you want to see live during a run, but it only keeps a limited amount of recent history and disappears once the run ends. For deeper investigation, especially of crashes or exceptions, Android Studio's Logcat shows the full system log from the Control Hub or phone, including stack traces from crashes, which is often necessary to actually understand why an OpMode stopped unexpectedly.
+```java
+VoltageSensor battery = hardwareMap.voltageSensor.iterator().next();
+telemetry.addData("Battery", "%.2f V", battery.getVoltage());
+```
 
-`System.out.println()` and `RobotLog.d()` calls also show up in Logcat and can be useful for logging information that's too verbose or too detailed for driver station telemetry but still useful when reviewing logs after a run.
+## Mistakes
 
-## Reproducing Intermittent Bugs
-
-The hardest bugs to fix are the ones that don't happen every time. A few things that help:
-
-- Add telemetry logging even for the "normal" case, not just when something looks wrong, so you have data from both good and bad runs to compare.
-- Note the exact conditions when the bug occurs (battery level, specific sequence of driver inputs, field position) and try to identify a pattern rather than treating each occurrence as random.
-- If a bug seems to correlate with low battery voltage, brownouts (a temporary voltage drop under high current draw) are a common and often overlooked cause of erratic behavior.
-
-## Common Mistakes
-
-**Removing debug telemetry too early.** It's tempting to strip out telemetry once a problem seems fixed, but leaving a reasonable amount of ongoing telemetry in place makes it much faster to catch a regression or a new related problem later.
-
-**Not checking the simple things first.** Loose wiring, a motor plugged into the wrong port, or a sensor that isn't actually connected are common causes of "broken" behavior that get missed because the debugging jumps straight to complex code logic.
-
-**Debugging on the field instead of on the bench.** Where possible, debug mechanisms on a test bench or in a controlled space rather than only during full field runs. It's much easier to isolate a problem when you're not also managing everything else happening during a full match simulation.
-
-Systematic debugging, using telemetry to check assumptions rather than guessing, is a skill that gets faster with practice and saves enormous amounts of time compared to randomly changing code and hoping something works.
+- **Removing debug telemetry too soon.** Keep a few key values in place. They help when something regresses.
+- **Debugging only on the field.** Test mechanisms on a bench where only one thing is running.

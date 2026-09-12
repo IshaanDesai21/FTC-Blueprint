@@ -94,15 +94,15 @@
 	}
 
 	.post-header h1 {
-		font-size: clamp(2.5rem, 8vw, 4rem);
+		font-size: clamp(1.75rem, 3vw, 2.25rem);
 		line-height: 1.1;
 		max-width: 800px;
 	}
 
 	.title-rule {
 		height: 2px;
-		background: var(--gradient-accent);
-		border-radius: 2px;
+		background: var(--text-primary);
+		border-radius: 0;
 		width: 60px;
 		opacity: 0.6;
 	}
@@ -195,8 +195,8 @@
 	.btn {
 		display: inline-block;
 		padding: 0.8rem 1.8rem;
-		background: var(--gradient-accent);
-		color: white;
+		background: var(--text-primary);
+		color: var(--bg);
 		border-radius: var(--radius-md);
 		text-decoration: none;
 		font-weight: 600;
@@ -204,6 +204,6 @@
 	}
 
 	.btn:hover {
-		transform: translateY(-2px);
+		transform: none;
 	}
 </style>

@@ -353,13 +353,13 @@
 
 	.title-rule {
 		height: 2px;
-		background: var(--gradient-accent);
-		border-radius: 2px;
+		background: var(--text-primary);
+		border-radius: 0;
 		width: 60px;
 		opacity: 0.6;
 	}
 	.gradient-text {
-		background: var(--gradient-accent, linear-gradient(135deg, #0ea5e9, #38bdf8));
+		background: var(--text-primary);
 		-webkit-background-clip: text;
 		background-clip: text;
 		-webkit-text-fill-color: transparent;
@@ -441,7 +441,7 @@
 		height: 188px;
 		background: rgba(14, 165, 233, 0.07);
 		border: 2px solid rgba(56, 189, 248, 0.35);
-		border-radius: 10px;
+		border-radius: 0;
 		margin: 0 20px 28px;
 		transition: transform 0.08s linear;
 	}
@@ -458,7 +458,7 @@
 		   We shift the element so its bottom sits on the chassis center,
 		   then rotate around that bottom edge. */
 		transform-origin: bottom center;
-		border-radius: 2px 2px 0 0;
+		border-radius: 0;
 	}
 	.move-vector::before {
 		content: '';
@@ -483,7 +483,7 @@
 		height: 52px;
 		background: var(--bg-secondary);
 		border: 1.5px solid var(--border);
-		border-radius: 4px;
+		border-radius: 0;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -493,7 +493,7 @@
 	}
 	.wheel-bar {
 		width: 10px;
-		border-radius: 2px;
+		border-radius: 0;
 		transition: height 0.1s, background 0.15s;
 		min-height: 0;
 	}
@@ -512,7 +512,7 @@
 		background: var(--bg-card);
 		border: 1px solid var(--border);
 		padding: 1px 3px;
-		border-radius: 3px;
+		border-radius: 0;
 		white-space: nowrap;
 		transition: color 0.15s;
 	}
@@ -545,7 +545,7 @@
 		gap: 0.5rem;
 		align-items: center;
 		padding: 0.35rem 0.5rem;
-		border-radius: 4px;
+		border-radius: 0;
 		transition: background 0.15s;
 		font-size: 0.82rem;
 	}
@@ -582,7 +582,7 @@
 		width: 38px; height: 38px;
 		background: var(--bg-secondary);
 		border: 1.5px solid var(--border);
-		border-radius: 6px;
+		border-radius: 0;
 		font-family: var(--font-mono);
 		font-size: 0.9rem;
 		font-weight: 700;
@@ -647,7 +647,7 @@
 		position: relative;
 		width: 36px; height: 20px;
 		background: var(--border);
-		border-radius: 10px;
+		border-radius: 0;
 		transition: background 0.2s;
 		flex-shrink: 0;
 	}
@@ -704,7 +704,7 @@
 	.v-btn {
 		background: var(--bg-secondary);
 		border: 1.5px solid var(--border);
-		border-radius: 8px;
+		border-radius: 0;
 		color: var(--text-primary);
 		font-family: var(--font-mono);
 		font-size: 1.1rem;
@@ -748,7 +748,7 @@
 		font-size: 0.85em;
 		background: var(--bg-secondary);
 		padding: 1px 5px;
-		border-radius: 3px;
+		border-radius: 0;
 	}
 
 	.callout {
@@ -771,7 +771,7 @@
 	.btn {
 		display: inline-block;
 		padding: 0.8rem 1.8rem;
-		background: var(--gradient-accent);
+		background: var(--text-primary);
 		color: white;
 		border-radius: var(--radius-md);
 		text-decoration: none;

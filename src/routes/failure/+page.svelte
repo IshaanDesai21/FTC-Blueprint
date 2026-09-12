@@ -58,7 +58,7 @@
 		font-size: 8rem;
 		font-weight: 800;
 		line-height: 1;
-		background: var(--gradient-accent);
+		background: var(--text-primary);
 		-webkit-background-clip: text;
 		background-clip: text;
 		-webkit-text-fill-color: transparent;

@@ -2,87 +2,77 @@
 title: Basics of Motors and Servos
 panelCategory: "Basics"
 date: 2026-04-15
-description: Programming guide for DC motors and servos in FTC.
-tags: [completed, software, beginner, completed]
+description: Controlling DC motors, servos, and continuous rotation servos in Java.
+tags: [completed, software, beginner]
 author: Blueprint
 published: true
 ---
 
-# Basics of Motors and Servos
-
-Almost everything your robot does physically comes down to motors and servos. Motors spin wheels and power arms. Servos position grippers and flip panels. Learning how to control them in code is the first real skill you'll build in FTC programming.
-
----
-
 ## DC Motors
 
-DC motors are what you'll use for your drivetrain and for high-torque mechanisms like arms, linear slides, and intakes.
+DC motors are used for drivetrains and for high-torque mechanisms like arms, slides, and intakes.
 
-### 1. Initialization
+### Getting the motor
 
-Every hardware device on your robot gets grabbed from the `hardwareMap` at the start of your OpMode. The string you pass in has to match the name you gave the device in the robot configuration app.
+Every device comes from `hardwareMap`. The string must match the name in the robot configuration.
 
 ```java
 DcMotor leftDrive = hardwareMap.get(DcMotor.class, "leftDrive");
 ```
 
-### 2. Setting Direction
+### Direction
 
-Depending on which way a motor is mounted, it might spin the wrong direction for what you need. Just call `setDirection` to flip it.
+If a motor spins the wrong way for how it is mounted, reverse it.
 
 ```java
 leftDrive.setDirection(DcMotor.Direction.REVERSE);
 ```
 
-This is really common on drivetrains where the motors on one side face the opposite direction from the other side.
+On a drivetrain, the motors on one side are usually reversed because they face the opposite direction from the other side.
 
-### 3. Basic Control
+### Power
 
-Motor power runs from -1.0 to 1.0. Positive values spin one way, negative values spin the other. Zero stops the motor.
+Power ranges from -1.0 to 1.0. Zero stops the motor.
 
 ```java
-leftDrive.setPower(0.5); // 50% power forward
+leftDrive.setPower(0.5);
 ```
 
-### 4. Zero Power Behavior
+### Zero power behavior
 
-When you set a motor's power to zero, you can choose what happens. Brake mode actively resists any movement, which is great for precision positioning. Float mode lets the motor spin freely, which can be useful for certain intake designs.
+`BRAKE` resists movement when power is zero. `FLOAT` lets the motor spin freely.
 
 ```java
 leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 ```
 
-For most mechanisms, you'll want BRAKE. For drivetrains it's more of a preference call.
-
----
+Use `BRAKE` for arms and slides so they hold position. For drivetrains either works.
 
 ## Servos
 
-Servos are used when you need precise angular positioning rather than continuous rotation. Think grippers, wrist joints, or anything that needs to move to a specific angle and hold there.
+### Standard servos
 
-### 1. Standard Servos
-
-Standard servos take a position value from 0.0 to 1.0, where 0.0 and 1.0 are the two ends of the servo's range of motion and 0.5 is the center.
+A standard servo moves to a position between 0.0 and 1.0 and holds it.
 
 ```java
 Servo gripper = hardwareMap.get(Servo.class, "gripper");
-gripper.setPosition(0.5); // Move to the middle position
+gripper.setPosition(0.5);
 ```
 
-### 2. Continuous Rotation (CR) Servos
+The actual angle for 0.0 and 1.0 depends on the servo and it's range setting. Find the positions you need by testing.
 
-CR servos don't have a fixed range. They just spin continuously, and you control the speed and direction. They work just like a DC motor from a code perspective.
+### Continuous rotation servos
+
+A CR servo spins like a motor. You set power, not position.
 
 ```java
 CRServo intake = hardwareMap.get(CRServo.class, "intake");
-intake.setPower(1.0); // Full speed forward
+intake.setPower(1.0);
 ```
 
----
+## Example OpMode
 
-## Example Program: LinearOpMode
-
-Here's a complete working example that pulls everything above together. It initializes an arm motor and a gripper servo, then lets a driver control them with a gamepad.
+An arm motor on the left stick and a gripper servo on the A and B buttons.
 
 ```java
 package org.firstinspires.ftc.teamcode;
@@ -92,7 +82,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-@TeleOp(name = "Motor and Servo Example", group = "Tutorial")
+@TeleOp(name = "Motor and Servo Example")
 public class MotorServoExample extends LinearOpMode {
 
     private DcMotor armMotor;
@@ -100,35 +90,23 @@ public class MotorServoExample extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        // 1. Initialize hardware
         armMotor = hardwareMap.get(DcMotor.class, "armMotor");
         gripper = hardwareMap.get(Servo.class, "gripper");
 
-        // 2. Set directions and behaviors
-        armMotor.setDirection(DcMotor.Direction.FORWARD);
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
-
-        // Wait for the game to start (driver presses START)
         waitForStart();
 
-        // Run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            
-            // 3. Control Motor (e.g., using left stick Y)
-            double motorPower = -gamepad1.left_stick_y; 
+            double motorPower = -gamepad1.left_stick_y;
             armMotor.setPower(motorPower);
 
-            // 4. Control Servo (e.g., using buttons)
             if (gamepad1.a) {
-                gripper.setPosition(1.0); // Open
+                gripper.setPosition(1.0);
             } else if (gamepad1.b) {
-                gripper.setPosition(0.0); // Closed
+                gripper.setPosition(0.0);
             }
 
-            // 5. Send telemetry to the driver station
             telemetry.addData("Motor Power", motorPower);
             telemetry.addData("Servo Position", gripper.getPosition());
             telemetry.update();
@@ -137,4 +115,4 @@ public class MotorServoExample extends LinearOpMode {
 }
 ```
 
-Notice that the left stick Y axis is negated. That's because gamepad joysticks in the FTC SDK report up as a negative value, which is the opposite of what you'd expect. Negating it makes pushing the stick forward give you a positive power value.
+The left stick Y value is negated because the gamepad reports up as negative. Negating it makes pushing forward give positive power.

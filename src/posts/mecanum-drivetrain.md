@@ -2,39 +2,35 @@
 title: Mecanum Drivetrain
 panelCategory: 'Miscellaneous'
 date: 2026-04-28
-description: Learn the kinematics and programming behind a 4-motor mecanum drivetrain.
+description: The kinematics and code for a four motor mecanum drivetrain.
 tags: [completed, software, beginner, kinematics]
 author: Blueprint
 published: true
 ---
 
-# Mecanum Drivetrain
+Mecanum wheels have rollers mounted at 45 degrees around the rim. Spinning the four wheels in different combinations moves the robot forward, sideways, or in rotation without turning the wheels.
 
-Mecanum wheels are one of the most popular drivetrain choices in FTC, and for good reason. They let your robot move in any direction without rotating first. You can drive sideways, diagonally, or spin in place, all with four wheels that never need to turn. This works because each wheel has small rubber rollers mounted at 45-degree angles around the rim. When you spin combinations of wheels in different directions, those rollers push the robot in directions that a regular wheel never could.
+## Kinematics
 
----
+Three inputs: forward `y`, strafe `x`, and rotation `rx`. Each wheel's power is a sum of the three with different signs.
 
-## Kinematics: The Math Behind the Movement
+- Front left = `y + x + rx`
+- Front right = `y - x - rx`
+- Back left = `y - x + rx`
+- Back right = `y + x - rx`
 
-To make a mecanum drivetrain work, you need to calculate the right power for each of the four motors based on what direction you want to move. You're combining three inputs: forward/backward ($y$), sideways strafing ($x$), and rotation ($r$).
+When strafing right, the front left and back right wheels drive forward while the front right and back left drive backward. The roller angles turn that into sideways motion.
 
-The formulas for each wheel are:
-
-- **Front Left** = $y + x + r$
-- **Front Right** = $y - x - r$
-- **Back Left** = $y - x + r$
-- **Back Right** = $y + x - r$
-
-This might look arbitrary at first, but it makes sense once you think about the geometry. When you strafe right, the front-left and back-right wheels need to push forward, while the front-right and back-left wheels push backward. That's what those $+x$ and $-x$ signs are capturing. The math handles all the combinations at once.
-
----
-
-## Implementation in Java
-
-Here's a solid starting implementation you can drop into a `LinearOpMode`. It reads from the gamepad and calculates the power for each motor every loop cycle.
+## Code
 
 ```java
-@TeleOp
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+@TeleOp(name = "Mecanum Drive")
 public class MecanumDrive extends LinearOpMode {
     @Override
     public void runOpMode() {
@@ -43,20 +39,16 @@ public class MecanumDrive extends LinearOpMode {
         DcMotor backLeft = hardwareMap.get(DcMotor.class, "backLeft");
         DcMotor backRight = hardwareMap.get(DcMotor.class, "backRight");
 
-        // Reverse the left side if necessary
-        frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-        backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontLeft.setDirection(DcMotor.Direction.REVERSE);
+        backLeft.setDirection(DcMotor.Direction.REVERSE);
 
         waitForStart();
 
         while (opModeIsActive()) {
-            double y = -gamepad1.left_stick_y; // Remember, y is reversed!
-            double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
+            double y = -gamepad1.left_stick_y;
+            double x = gamepad1.left_stick_x * 1.1;
             double rx = gamepad1.right_stick_x;
 
-            // Denominator is the largest motor power (absolute value) or 1
-            // This ensures all the powers maintain the same ratio,
-            // but only if at least one is out of the range [-1, 1]
             double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
             double frontLeftPower = (y + x + rx) / denominator;
             double backLeftPower = (y - x + rx) / denominator;
@@ -72,14 +64,14 @@ public class MecanumDrive extends LinearOpMode {
 }
 ```
 
-The `denominator` calculation is worth understanding. If your three inputs add up to more than 1.0, you'd be asking a motor to run at more than 100% power, which isn't possible. Dividing all four powers by the largest sum scales everything down proportionally so the relative ratios stay correct and nothing goes out of range.
+**Denominator.** If the three inputs add to more than 1.0, a motor would be asked for more than full power. Dividing all four by the largest sum keeps the ratios between wheels the same and keeps every power in range.
 
----
+**1.1 on strafe.** Mecanum robots strafe slower than they drive forward. Multiplying the strafe input by a small constant compensates. Tune it for your robot.
 
-## Tips for Better Mecanum Drive
+**Reversed left side.** Which side needs reversing depends on how the motors are mounted. If the robot drives backward when you push forward, flip which side is reversed.
 
-Weight distribution matters a lot with mecanum wheels. If one corner of your robot is noticeably lighter than the others, that wheel loses traction and your strafing will drift. Try to keep your heaviest components centered and low.
+## Notes
 
-The `1.1` multiplier on the strafe input is a practical fix for a real physical problem. Strafing with mecanum wheels is less efficient than driving forward because of how the roller forces add up, so robots tend to strafe more slowly than they drive. Multiplying the strafe input by a small constant compensates for that. You may need to tune this number for your specific robot.
-
-Once your team gets comfortable with basic robot-centric control, look into field-centric drive. Instead of moving relative to the robot's front, the robot moves relative to a fixed direction on the field. It's a bit more math (you rotate the x/y inputs using the IMU heading), but drivers who learn it usually never want to go back. It makes fine positioning during a match much less stressful.
+- Weight has to be spread across all four wheels. A light corner loses traction and the robot drifts while strafing.
+- The wheels must be mounted so the rollers form an X when viewed from above. If the robot rotates instead of strafing, one or more wheel is in the wrong position.
+- Field-centric drive rotates `x` and `y` by the IMU heading before the math above, so the robot moves relative to the field instead of its own front. See [Teleop Beginner](/software/teleop-beginner).

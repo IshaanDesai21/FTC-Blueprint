@@ -2,95 +2,96 @@
 title: AprilTag Detection
 panelCategory: "Vision"
 date: 2026-04-14
-description: Using AprilTags for localization and detection in FTC autonomous routines.
+description: Detecting AprilTags with VisionPortal and driving toward one.
 tags: [software, beginner, completed]
 author: Blueprint
 published: true
 ---
 
-AprilTags are one of the most useful tools in FTC autonomous programming. Once you learn how to use them, your robot can figure out where it is on the field without any guesswork. That means more reliable autonomous routines, better alignment, and higher scores. Let's break down exactly how they work and how to use them in your code.
+AprilTags are square black and white markers placed on the field. The SDK detects them from a webcam and reports the distance and angle from the camera to each tag. Every tag has an ID, and the field tag positions are listed in the game manual.
 
-## What Are AprilTags?
+## Requirements
 
-An AprilTag is a small square marker with a unique black-and-white pattern inside it, kind of like a QR code. FTC places these tags on the field walls and game elements every season. Your robot's camera can spot these tags and instantly calculate useful information like how far away the tag is, what angle the robot is looking at it from, and how much the tag is rotated relative to the camera.
+- A USB webcam plugged into the Control Hub.
+- The webcam in the robot configuration. The default name is `Webcam 1`.
+- SDK 8.2 or newer, which has `VisionPortal` and `AprilTagProcessor`.
 
-Every tag has an ID number, and the field's tags are documented in the game manual, so once the camera reads an ID your code knows exactly which tag it is and where that tag sits on the field.
+## Setup
 
-The FTC SDK handles the math for you. You set up the camera, read the data it gives you, and use it in your code.
-
-## What You Need
-
-Before writing any code, make sure you have:
-
-- A USB webcam plugged into one of the Control Hub's USB ports
-- The webcam configured in your robot configuration file with a name like "Webcam 1"
-- A recent version of the FTC SDK (2024-2025 season or later)
-
-The modern way to use AprilTags in FTC is through the **Vision Portal**. This replaced older approaches like VuMark and TensorFlow. If you see old tutorials using those, ignore them. The Vision Portal is cleaner, faster, and officially supported.
-
-## Setting Up the Vision Portal
-
-To start detecting AprilTags, you need two things: an `AprilTagProcessor` and a `VisionPortal`. The processor does the actual detection work. The portal manages the camera and feeds frames to the processor.
-
-Here is how you set both up:
+`AprilTagProcessor` does the detection. `VisionPortal` runs the camera and feeds it frames.
 
 ```java
-AprilTagProcessor aprilTagProcessor = new AprilTagProcessor.Builder().build();
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
+AprilTagProcessor aprilTag = new AprilTagProcessor.Builder().build();
 
 VisionPortal visionPortal = new VisionPortal.Builder()
     .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-    .addProcessor(aprilTagProcessor)
+    .addProcessor(aprilTag)
     .build();
 ```
 
-That is all it takes to get started. The `Builder` pattern lets you customize settings if you need to, but the defaults work great for FTC field tags. Make sure the string "Webcam 1" matches exactly what you named your webcam in the robot configuration.
+Build this before `waitForStart()`. The defaults use the current season's tag library, so the range numbers are correct for the official tags.
 
-Put this code in your `init()` method or at the start of your `runOpMode()` method. The Vision Portal will start up and begin processing camera frames right away.
-
-## Reading Tag Detections
-
-Once the Vision Portal is running, you can ask the processor for a list of everything it currently sees. Each detected tag comes back as an `AprilTagDetection` object with a bunch of useful fields.
+## Reading detections
 
 ```java
-List<AprilTagDetection> detections = aprilTagProcessor.getDetections();
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import java.util.List;
+
+List<AprilTagDetection> detections = aprilTag.getDetections();
 for (AprilTagDetection detection : detections) {
     if (detection.metadata != null) {
-        telemetry.addLine("Tag ID " + detection.id);
-        telemetry.addLine("  Range: " + detection.ftcPose.range + " inches");
-        telemetry.addLine("  Bearing: " + detection.ftcPose.bearing + " degrees");
-        telemetry.addLine("  Yaw: " + detection.ftcPose.yaw + " degrees");
+        telemetry.addData("ID", detection.id);
+        telemetry.addData("Range", "%.1f in", detection.ftcPose.range);
+        telemetry.addData("Bearing", "%.1f deg", detection.ftcPose.bearing);
+        telemetry.addData("Yaw", "%.1f deg", detection.ftcPose.yaw);
     }
 }
 ```
 
-The `detection.metadata != null` check is important. If the processor sees a tag but cannot find it in its tag library, `metadata` will be null. Only known, recognized tags will have full pose information. Skipping unknown tags keeps your code clean and crash-free.
+`metadata` is null for a tag that is not in the tag library. `ftcPose` is only filled in for known tags, so check `metadata` before reading it.
 
-### Understanding the Pose Fields
+## Pose fields
 
-The `ftcPose` object is where all the good data lives. Here is what each field means in plain terms:
+- **`range`**: straight-line distance from the camera to the tag, in inches.
+- **`bearing`**: angle the camera would have to turn to point at the tag, in degrees. Positive means the tag is to the left.
+- **`yaw`**: how much the tag is rotated relative to the camera. Zero means you are looking at it straight on.
 
-- **`ftcPose.range`** - The straight-line distance in inches from your camera to the center of the tag. If range is 24, the tag is about two feet away.
-- **`ftcPose.bearing`** - The left-right angle to the tag in degrees. A bearing of 0 means the tag is directly in front of the camera. Negative values mean the tag is to the left, and positive values mean it is to the right.
-- **`ftcPose.yaw`** - How much the tag itself is rotated relative to your camera's view. This tells you if you are looking at the tag straight-on or at an angle.
+`range` and `bearing` are enough to drive to a tag.
 
-For most autonomous tasks, `range` and `bearing` are the two fields you will use the most. Range tells you when to stop, and bearing tells you which way to steer.
+## Example: drive to a tag
 
-## A Practical Autonomous Example
-
-Here is a simple but real autonomous routine. The robot looks for a specific AprilTag, drives toward it using a mecanum drivetrain, and stops when it gets close enough. This is the kind of thing you would use to line up for scoring.
+Proportional control on range and bearing. The robot drives until it is 12 inches from tag 3 and pointed at it.
 
 ```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import java.util.List;
+
 @Autonomous(name = "Drive To AprilTag")
 public class DriveToAprilTag extends LinearOpMode {
 
     static final int TARGET_TAG_ID = 3;
-    static final double DESIRED_RANGE_INCHES = 12.0;
-    static final double DRIVE_SPEED = 0.4;
-    static final double STEER_SPEED = 0.3;
+    static final double DESIRED_RANGE = 12.0;
+    static final double RANGE_GAIN = 0.02;
+    static final double TURN_GAIN = 0.01;
+    static final double MAX_DRIVE = 0.4;
+    static final double MAX_TURN = 0.3;
 
     @Override
     public void runOpMode() {
-
         DcMotor frontLeft  = hardwareMap.get(DcMotor.class, "frontLeft");
         DcMotor frontRight = hardwareMap.get(DcMotor.class, "frontRight");
         DcMotor backLeft   = hardwareMap.get(DcMotor.class, "backLeft");
@@ -99,93 +100,73 @@ public class DriveToAprilTag extends LinearOpMode {
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         backLeft.setDirection(DcMotor.Direction.REVERSE);
 
-        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        AprilTagProcessor aprilTagProcessor = new AprilTagProcessor.Builder().build();
-
+        AprilTagProcessor aprilTag = new AprilTagProcessor.Builder().build();
         VisionPortal visionPortal = new VisionPortal.Builder()
             .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-            .addProcessor(aprilTagProcessor)
+            .addProcessor(aprilTag)
             .build();
 
-        telemetry.addLine("Ready. Waiting for start...");
-        telemetry.update();
         waitForStart();
 
-        while (opModeIsActive()) {
+        ElapsedTime timeout = new ElapsedTime();
 
-            AprilTagDetection targetTag = null;
+        while (opModeIsActive() && timeout.seconds() < 10) {
+            AprilTagDetection target = null;
 
-            List<AprilTagDetection> detections = aprilTagProcessor.getDetections();
-            for (AprilTagDetection detection : detections) {
-                if (detection.metadata != null && detection.id == TARGET_TAG_ID) {
-                    targetTag = detection;
+            List<AprilTagDetection> detections = aprilTag.getDetections();
+            for (AprilTagDetection d : detections) {
+                if (d.metadata != null && d.id == TARGET_TAG_ID) {
+                    target = d;
                     break;
                 }
             }
 
-            if (targetTag != null) {
-                double rangeError   = targetTag.ftcPose.range - DESIRED_RANGE_INCHES;
-                double bearingError = targetTag.ftcPose.bearing;
+            double drive = 0;
+            double rotate = 0;
 
-                // Stop if we are close enough and roughly centered
-                if (Math.abs(rangeError) < 1.0 && Math.abs(bearingError) < 2.0) {
-                    frontLeft.setPower(0);
-                    frontRight.setPower(0);
-                    backLeft.setPower(0);
-                    backRight.setPower(0);
-                    telemetry.addLine("On target! Stopping.");
-                } else {
-                    // Drive forward/backward based on range, strafe based on bearing
-                    double drive  = (rangeError > 0) ? DRIVE_SPEED : -DRIVE_SPEED;
-                    double strafe = (bearingError < 0) ? STEER_SPEED : -STEER_SPEED;
+            if (target != null) {
+                double rangeError = target.ftcPose.range - DESIRED_RANGE;
+                double bearing = target.ftcPose.bearing;
 
-                    if (Math.abs(rangeError) < 2.0)   drive  = 0;
-                    if (Math.abs(bearingError) < 3.0)  strafe = 0;
-
-                    frontLeft.setPower(drive + strafe);
-                    frontRight.setPower(drive - strafe);
-                    backLeft.setPower(drive - strafe);
-                    backRight.setPower(drive + strafe);
+                if (Math.abs(rangeError) < 1.0 && Math.abs(bearing) < 2.0) {
+                    break;
                 }
 
-                telemetry.addData("Range",   targetTag.ftcPose.range);
-                telemetry.addData("Bearing", targetTag.ftcPose.bearing);
+                drive = Range.clip(rangeError * RANGE_GAIN, -MAX_DRIVE, MAX_DRIVE);
+                rotate = Range.clip(-bearing * TURN_GAIN, -MAX_TURN, MAX_TURN);
 
+                telemetry.addData("Range", "%.1f", target.ftcPose.range);
+                telemetry.addData("Bearing", "%.1f", bearing);
             } else {
-                // Tag not visible - stop and wait
-                frontLeft.setPower(0);
-                frontRight.setPower(0);
-                backLeft.setPower(0);
-                backRight.setPower(0);
-                telemetry.addLine("Tag not found. Waiting...");
+                telemetry.addLine("Tag not visible");
             }
+
+            frontLeft.setPower(drive + rotate);
+            frontRight.setPower(drive - rotate);
+            backLeft.setPower(drive + rotate);
+            backRight.setPower(drive - rotate);
 
             telemetry.update();
         }
+
+        frontLeft.setPower(0);
+        frontRight.setPower(0);
+        backLeft.setPower(0);
+        backRight.setPower(0);
 
         visionPortal.close();
     }
 }
 ```
 
-Walk through what this code does step by step. First, it sets up four mecanum motors and puts them in `RUN_WITHOUT_ENCODER` mode. Then it builds the Vision Portal with an AprilTag processor. After start is pressed, the loop keeps looking for tag ID 3. When it finds the tag, it calculates how far off the robot is in both range and bearing, and adjusts the motor powers accordingly. When both errors are small enough, the robot stops. If the tag disappears from view, the robot stops and waits.
+`rotate` is negated because a positive bearing means the tag is to the left and the robot has to turn counter-clockwise, which is a negative `rx` in the mecanum convention used on this site. If the robot turns away from the tag, flip the sign.
 
-This is a simplified example. A real competition routine would use proportional control - where motor power scales smoothly with the error instead of snapping on and off - and would add a timeout so the robot does not wait forever. But this gives you the solid structure to build from.
+The loop exits when the robot is on target, when the timeout runs out, or when Stop is pressed. If the tag is not visible the robot stops and waits.
 
-## Tips for Success
+## Notes
 
-**Close the Vision Portal when you are done.** Calling `visionPortal.close()` at the end of your OpMode frees up the camera and memory. If you skip this, you may run into issues when re-initializing the camera on your next run.
-
-**Use streaming to see what your camera sees.** During testing, call `visionPortal.resumeStreaming()` and open the camera stream on your Driver Hub or phone. This is incredibly helpful for diagnosing detection problems. You can literally see whether your camera has a clear line of sight to the tags.
-
-**Lighting matters more than you think.** AprilTag detection works much better in consistent, bright lighting. A tag that your robot can see perfectly in your school hallway might be invisible under the weird gym lighting at a competition. Always test in lighting conditions that are as close to competition as possible.
-
-**Do not change the tag size unless you are using custom-printed tags.** The FTC SDK already knows the physical size of the official field tags. If you set a custom tag size in the builder, you will throw off all the range calculations. Only change this if you are testing with your own printed tags at a different size.
-
-**Always check `metadata` before reading pose data.** This is the most common source of null pointer crashes in vision code. The check `detection.metadata != null` is short, but it will save you a lot of headaches at competition.
-
-AprilTags are genuinely one of the best tools available to FTC teams. Once you get comfortable reading their data, you can build autonomous routines that are much more adaptable and reliable than ones that rely purely on timing or encoder counts. Give this a try in your next auto and see how much more consistent your robot becomes.
+- Call `visionPortal.close()` when done so the camera is released.
+- While the OpMode is in init, the Driver Station menu has a Camera Stream option that shows the camera view. Use it to check that tags are in frame.
+- Detection depends on lighting. Test under lighting close to the competition venue.
+- Higher camera resolution gives better range at the cost of frame rate. Set it with `.setCameraResolution(new Size(640, 480))` on the portal builder if you need to change it.
+- Always check `metadata != null` before reading `ftcPose`. Its the most common null pointer crash in vision code.

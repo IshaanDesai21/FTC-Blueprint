@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import ThemeToggle from './ThemeToggle.svelte';
-	import AccessibilityPanel from './AccessibilityPanel.svelte';
 	import { devModeState, setDevMode, initDevMode, setPreviewMode } from '$lib/stores/devMode.svelte';
 	import { goto } from '$app/navigation';
 	import toast from 'svelte-5-french-toast';
@@ -30,11 +29,9 @@
 		const val = target.value;
 
 		if ($page.url.pathname === '/search') {
-			// Sync what they typed down to the main page!
-			displayQuery = ''; 
+			displayQuery = '';
 			actualQuery = '';
 			document.getElementById('main-search-input')?.focus();
-			// Dispatch event so main page can append/set this char
 			window.dispatchEvent(new CustomEvent('headerToMainSearchSync', { detail: val }));
 			return;
 		}
@@ -83,28 +80,27 @@
 	type NavLink = {
 		label: string;
 		href?: string;
+		match?: string;
 		devOnly?: boolean;
 		children?: NavLink[];
 	};
 
-	// Header stays minimal (ProtoFlow-style): sections live in the left sidebar.
-	// Only the cross-simulator dropdown and Suggest remain, since simulator pages
-	// have no sidebar of their own.
 	const navLinks: NavLink[] = [
+		{ href: '/software', label: 'Software', match: '/software' },
 		{
 			label: 'Simulators',
+			match: '/simulators',
 			children: [
-				{ href: '/simulators/model-converter', label: 'Model Converter', devOnly: true },
 				{ href: '/simulators/pid', label: 'PID Simulator' },
-				{ href: '/simulators/motionprofile', label: 'Motion Profiling' },
-				{ href: '/simulators/feedforward', label: 'Feedforward' },
-				{ href: '/simulators/pid-game', label: 'PID Learning Game' },
 				{ href: '/simulators/mecanum', label: 'Mecanum Simulator' },
-				{ href: '/software/markdown-reference', label: 'Markdown Reference', devOnly: true }
+				{ href: '/simulators/model-converter', label: 'Model Converter', devOnly: true }
 			]
 		},
-		{ href: '/suggest', label: 'Suggest' },
-		{ href: '/editor', label: 'Editor', devOnly: true }
+		{ href: '/complete-rookie-guide', label: 'Rookie Guide', match: '/complete-rookie-guide' },
+		{ href: '/review', label: 'Get a Free Review', match: '/review' },
+		{ href: '/suggest', label: 'Suggest', match: '/suggest' },
+		{ href: '/editor', label: 'Editor', match: '/editor', devOnly: true },
+		{ href: '/software/markdown-reference', label: 'Markdown Reference', match: '/software/markdown-reference', devOnly: true }
 	];
 
 	const visibleNavLinks = $derived(
@@ -122,11 +118,11 @@
 	);
 
 	let menuOpen = $state(false);
-	let simulatorsOpen = $state(false);
+	let dropdownOpen = $state(false);
 
 	function closeMenu() {
 		menuOpen = false;
-		simulatorsOpen = false;
+		dropdownOpen = false;
 	}
 
 	function handleSearchSubmit(e: Event) {
@@ -153,23 +149,20 @@
 		}
 	}
 
-	const isSimulatorActive = () =>
-		[
-			'/simulators/pid',
-			'/simulators/motionprofile',
-			'/simulators/feedforward',
-			'/simulators/mecanum'
-		].some((path) => $page.url.pathname === path || $page.url.pathname.startsWith(`${path}/`));
+	const isActive = (match?: string) => {
+		if (!match) return false;
+		const p = $page.url.pathname;
+		return p === match || p.startsWith(`${match}/`);
+	};
 </script>
 
 <svelte:window onkeydown={handleWindowKeydown} />
 
-<header class="header" class:scrolled={false}>
-	<div class="inner" class:dev-mode-active={devModeState.active}>
+<header class="header">
+	<div class="inner">
 		<a href="/" class="logo" onclick={closeMenu}>
 			<span class="logo-mark">⬡</span>
 			<span class="logo-text">Blueprint</span>
-			<span class="logo-docs">/ Docs</span>
 		</a>
 
 		<nav class="nav" class:open={menuOpen} aria-label="Main navigation">
@@ -178,17 +171,17 @@
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
 						class="nav-dropdown"
-						class:open={simulatorsOpen}
-						onmouseenter={() => { if (typeof window !== 'undefined' && window.innerWidth > 1024) simulatorsOpen = true; }}
-						onmouseleave={() => { if (typeof window !== 'undefined' && window.innerWidth > 1024) simulatorsOpen = false; }}
+						class:open={dropdownOpen}
+						onmouseenter={() => { if (typeof window !== 'undefined' && window.innerWidth > 1024) dropdownOpen = true; }}
+						onmouseleave={() => { if (typeof window !== 'undefined' && window.innerWidth > 1024) dropdownOpen = false; }}
 					>
 						<button
 							type="button"
 							class="nav-link dropdown-toggle"
-							class:active={isSimulatorActive()}
-							aria-expanded={simulatorsOpen}
+							class:active={isActive(item.match)}
+							aria-expanded={dropdownOpen}
 							aria-haspopup="true"
-							onclick={() => (simulatorsOpen = !simulatorsOpen)}
+							onclick={() => (dropdownOpen = !dropdownOpen)}
 						>
 							{item.label}
 							<span class="chevron">▾</span>
@@ -212,9 +205,8 @@
 					<a
 						href={item.href}
 						class="nav-link"
-						class:active={$page.url.pathname === item.href ||
-							($page.url.pathname.startsWith('/software') && item.href === '/software')}
-						aria-current={$page.url.pathname === item.href ? 'page' : undefined}
+						class:active={isActive(item.match)}
+						aria-current={isActive(item.match) ? 'page' : undefined}
 						onclick={closeMenu}
 					>
 						{item.label}
@@ -227,8 +219,8 @@
 			<form class="header-search-wrap" onsubmit={handleSearchSubmit}>
 				<svg
 					class="search-icon"
-					width="16"
-					height="16"
+					width="15"
+					height="15"
 					viewBox="0 0 24 24"
 					fill="none"
 					stroke="currentColor"
@@ -263,18 +255,16 @@
 			{#if devModeState.active && !isSandboxChild}
 				<div class="viewport-toggle">
 					<button class="view-btn" class:active={devModeState.previewMode === 'desktop'} onclick={() => setPreviewMode('desktop')} title="Desktop View">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
 					</button>
 					<button class="view-btn" class:active={devModeState.previewMode === 'tablet'} onclick={() => setPreviewMode('tablet')} title="Tablet View">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
 					</button>
 					<button class="view-btn" class:active={devModeState.previewMode === 'mobile'} onclick={() => setPreviewMode('mobile')} title="Mobile View">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
 					</button>
 				</div>
 			{/if}
-
-			<AccessibilityPanel />
 
 			<ThemeToggle />
 
@@ -312,24 +302,15 @@
 		background: var(--bg-header);
 		backdrop-filter: blur(8px);
 		-webkit-backdrop-filter: blur(8px);
-		border-bottom: 1px solid var(--border-subtle);
-		will-change: transform, opacity;
-		transition:
-			background var(--transition-slow),
-			border-color var(--transition-slow);
-	}
-
-	:global(html.light) .header {
-		background: var(--bg-header);
+		border-bottom: 1px solid var(--border);
 	}
 
 	.inner {
 		display: flex;
 		align-items: center;
-		justify-content: flex-start;
 		gap: 1.5rem;
 		height: 100%;
-		max-width: 1560px; /* Expanded for a wider, more agile logo position */
+		max-width: 1560px;
 		margin: 0 auto;
 		padding: 0 1.5rem;
 	}
@@ -337,160 +318,80 @@
 	.actions {
 		display: flex;
 		align-items: center;
-		gap: 0.75rem;
+		gap: 0.5rem;
 		margin-left: auto;
 		flex-shrink: 0;
-	}
-
-	:global(.dev-mode-active) .actions {
-		gap: 0.4rem;
-		flex-shrink: 0;
-	}
-
-	.inner.dev-mode-active {
-		gap: 1rem;
-	}
-
-	.inner.dev-mode-active .logo {
-		margin-right: 0.5rem;
-	}
-
-	.inner.dev-mode-active .nav {
-		gap: 0.1rem;
-	}
-
-	.inner.dev-mode-active .nav-link {
-		padding: 0.4em 0.5rem;
-		font-size: 0.85rem;
-	}
-
-	@media (max-width: 1350px) {
-		.inner {
-			gap: 0.5rem;
-		}
-		
-		.actions {
-			margin-left: 0.5rem;
-		}
-	}
-
-	@media (max-width: 1200px) {
-		.inner {
-			gap: 1.25rem;
-		}
-		
-		.nav {
-			gap: 0;
-		}
-		
-		.nav-link {
-			padding: 0.4em 0.6em;
-		}
 	}
 
 	.logo {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.45rem;
 		text-decoration: none;
 		color: var(--text-primary);
-		font-family: var(--font-sans);
 		font-weight: 700;
-		font-size: 1.15rem;
-		letter-spacing: -0.02em;
-		transition: opacity var(--transition-fast);
+		font-size: 1.05rem;
+		letter-spacing: -0.01em;
+		flex-shrink: 0;
 	}
 
 	.logo:hover {
-		opacity: 0.8;
 		color: var(--text-primary);
 	}
 
 	.logo-mark {
-		font-size: 1.4rem;
-		color: var(--text-primary);
+		font-size: 1.25rem;
 		line-height: 1;
-	}
-
-	.logo-docs {
-		font-weight: 500;
-		font-size: 0.95rem;
-		color: var(--text-muted);
-		letter-spacing: 0;
-	}
-
-	@media (max-width: 1200px) {
-		.logo-docs {
-			display: none;
-		}
 	}
 
 	.nav {
 		display: flex;
 		align-items: center;
-		gap: 0.25rem;
+		gap: 0.15rem;
+		height: 100%;
 	}
 
 	.nav-link {
 		position: relative;
-		padding: 0.4em 0.85em;
-		border-radius: var(--radius-sm);
-		font-family: var(--font-sans);
-		font-size: 0.9rem;
+		display: inline-flex;
+		align-items: center;
+		height: var(--header-height);
+		padding: 0 0.75rem;
+		font-size: 0.875rem;
 		font-weight: 500;
 		color: var(--text-secondary);
 		text-decoration: none;
-		text-align: center;
-		transition:
-			color var(--transition-fast),
-			background var(--transition-fast);
-	}
-
-	.nav-link::after {
-		content: '';
-		position: absolute;
-		bottom: 2px;
-		left: 50%;
-		transform: translateX(-50%) scaleX(0);
-		width: 16px;
-		height: 2px;
-		background: var(--gradient-accent);
-		border-radius: 2px;
-		transition: transform var(--transition-base);
+		border-bottom: 2px solid transparent;
+		margin-bottom: -1px;
+		white-space: nowrap;
+		transition: color var(--transition-fast);
 	}
 
 	.nav-link:hover {
 		color: var(--text-primary);
-		background: var(--bg-secondary);
-	}
-
-	:global(html.light) .nav-link:hover {
-		background: var(--bg-secondary);
 	}
 
 	.nav-link.active {
 		color: var(--text-primary);
-	}
-
-	.nav-link.active::after {
-		transform: translateX(-50%) scaleX(1);
+		border-bottom-color: var(--text-primary);
 	}
 
 	.nav-dropdown {
 		position: relative;
+		height: 100%;
 	}
 
 	.dropdown-toggle {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.35rem;
+		gap: 0.3rem;
 		background: transparent;
-		border: none;
+		border-top: none;
+		border-left: none;
+		border-right: none;
 		cursor: pointer;
 	}
 
 	.chevron {
-		font-size: 0.8rem;
+		font-size: 0.75rem;
 		transition: transform var(--transition-base);
 	}
 
@@ -500,18 +401,16 @@
 
 	.dropdown-menu {
 		position: absolute;
-		top: calc(100% + 0.4rem);
+		top: 100%;
 		left: 0;
-		min-width: 220px;
-		padding: 0.5rem;
+		min-width: 200px;
+		padding: 0.35rem;
 		border: 1px solid var(--border);
-		border-radius: var(--radius-md);
-		background: var(--bg-secondary);
-		box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+		background: var(--bg-card);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 		opacity: 0;
 		visibility: hidden;
-		transform: translateY(-6px);
-		transition: all var(--transition-base);
+		transition: opacity var(--transition-fast), visibility var(--transition-fast);
 		z-index: 120;
 	}
 
@@ -520,30 +419,19 @@
 	.nav-dropdown:focus-within .dropdown-menu {
 		opacity: 1;
 		visibility: visible;
-		transform: translateY(0);
 	}
 
 	.dropdown-link {
 		display: block;
-		padding: 0.6rem 0.75rem;
-		border-radius: var(--radius-sm);
+		padding: 0.5rem 0.7rem;
+		font-size: 0.85rem;
 		color: var(--text-secondary);
 		text-decoration: none;
-		transition:
-			background var(--transition-fast),
-			color var(--transition-fast);
 	}
 
 	.dropdown-link:hover,
-	.dropdown-link.active,
-	.dropdown-link[aria-current='page'] {
+	.dropdown-link.active {
 		color: var(--text-primary);
-		background: var(--bg-secondary);
-	}
-
-	:global(html.light) .dropdown-link:hover,
-	:global(html.light) .dropdown-link.active,
-	:global(html.light) .dropdown-link[aria-current='page'] {
 		background: var(--bg-secondary);
 	}
 
@@ -556,40 +444,36 @@
 	.viewport-toggle {
 		display: flex;
 		align-items: center;
-		background: var(--bg-hover);
-		border-radius: var(--radius-md);
-		border: 1px solid var(--border-subtle);
-		padding: 0.15rem;
+		background: var(--bg-secondary);
+		border: 1px solid var(--border);
+		padding: 0.1rem;
 		gap: 0.1rem;
 	}
-	
+
 	.view-btn {
 		background: transparent;
 		border: none;
-		border-radius: var(--radius-sm);
 		color: var(--text-muted);
-		width: 30px;
-		height: 30px;
+		width: 28px;
+		height: 28px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
-		transition: all var(--transition-fast);
 	}
-	
+
 	.view-btn:hover {
 		color: var(--text-secondary);
 	}
-	
+
 	.view-btn.active {
 		background: var(--bg-card);
 		color: var(--text-primary);
-		box-shadow: 0 2px 4px rgba(0,0,0,0.06);
 	}
 
 	.header-search-wrap .search-icon {
 		position: absolute;
-		left: 0.75rem;
+		left: 0.65rem;
 		color: var(--text-muted);
 		pointer-events: none;
 	}
@@ -597,13 +481,12 @@
 	.header-search-input {
 		background: var(--bg-secondary);
 		border: 1px solid var(--border);
-		border-radius: var(--radius-md);
-		padding: 0.45rem 3rem 0.45rem 2.2rem;
+		padding: 0.4rem 3rem 0.4rem 2rem;
 		font-size: 0.85rem;
 		color: var(--text-primary);
-		width: 240px;
-		transition: border-color var(--transition-fast), background var(--transition-fast);
+		width: 220px;
 		outline: none;
+		transition: border-color var(--transition-fast);
 	}
 
 	.header-search-input::placeholder {
@@ -627,7 +510,6 @@
 		color: var(--bg);
 		background: var(--text-primary);
 		padding: 0.2em 0.5em;
-		border-radius: var(--radius-pill);
 		pointer-events: none;
 	}
 
@@ -636,30 +518,24 @@
 		right: 0.5rem;
 		top: 50%;
 		transform: translateY(-50%);
-		font-family: var(--font-sans);
 		font-size: 0.65rem;
 		color: var(--text-muted);
-		background: var(--bg-secondary);
+		background: var(--bg-card);
 		border: 1px solid var(--border);
-		padding: 0.15em 0.4em;
-		border-radius: 4px;
+		padding: 0.1em 0.4em;
 		pointer-events: none;
-		opacity: 0.8;
-		z-index: 10;
 	}
 
 	.action-btn {
-		width: 38px;
-		height: 38px;
+		width: 36px;
+		height: 36px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		background: var(--bg-card);
 		border: 1px solid var(--border);
-		border-radius: var(--radius-md);
 		color: var(--text-secondary);
 		cursor: pointer;
-		transition: all var(--transition-fast);
 	}
 
 	.mobile-search-btn {
@@ -669,7 +545,6 @@
 	.action-btn:hover {
 		border-color: var(--text-primary);
 		color: var(--text-primary);
-		background: var(--bg-card-hover);
 	}
 
 	.menu-btn {
@@ -678,11 +553,10 @@
 		justify-content: center;
 		align-items: center;
 		gap: 5px;
-		width: 38px;
-		height: 38px;
+		width: 36px;
+		height: 36px;
 		background: var(--bg-card);
 		border: 1px solid var(--border);
-		border-radius: var(--radius-md);
 		cursor: pointer;
 		padding: 0;
 	}
@@ -692,7 +566,6 @@
 		width: 18px;
 		height: 2px;
 		background: var(--text-primary);
-		border-radius: 2px;
 		transition:
 			transform var(--transition-base),
 			opacity var(--transition-base);
@@ -712,8 +585,17 @@
 		position: fixed;
 		inset: 0;
 		z-index: 99;
-		background: rgba(0, 0, 0, 0.5);
-		backdrop-filter: blur(4px);
+		background: rgba(0, 0, 0, 0.4);
+	}
+
+	@media (max-width: 1200px) {
+		.inner {
+			gap: 1rem;
+		}
+
+		.nav-link {
+			padding: 0 0.55rem;
+		}
 	}
 
 	@media (max-width: 1024px) {
@@ -721,28 +603,20 @@
 			display: flex;
 		}
 
-		.actions {
-			margin-left: auto;
-		}
-
-		.header-search-input {
-			width: 320px;
-		}
-
 		.nav {
 			position: fixed;
 			top: var(--header-height);
 			left: 0;
 			z-index: 100;
+			height: auto;
 			flex-direction: column;
-			align-items: flex-start;
-			gap: 0.25rem;
-			width: 220px;
-			padding: 1rem;
-			background: var(--bg-secondary);
+			align-items: stretch;
+			gap: 0;
+			width: 240px;
+			padding: 0.5rem 0;
+			background: var(--bg-card);
 			border-right: 1px solid var(--border);
 			border-bottom: 1px solid var(--border);
-			border-radius: 0 0 var(--radius-lg) 0;
 			transform: translateX(-100%);
 			transition: transform var(--transition-base);
 		}
@@ -753,31 +627,36 @@
 
 		.nav-link {
 			width: 100%;
-			padding: 0.6em 0.75em;
+			height: auto;
+			padding: 0.65rem 1rem;
+			border-bottom: none;
+			border-left: 2px solid transparent;
+			margin-bottom: 0;
+		}
+
+		.nav-link.active {
+			border-left-color: var(--text-primary);
+			background: var(--bg-secondary);
 		}
 
 		.nav-dropdown {
 			width: 100%;
+			height: auto;
 		}
 
 		.dropdown-toggle {
 			width: 100%;
-			justify-content: center;
-			gap: 0.35rem;
-			padding: 0.6em 0.75em;
+			justify-content: space-between;
 		}
 
 		.dropdown-menu {
 			position: static;
 			min-width: 0;
 			width: 100%;
-			margin-top: 0.25rem;
-			padding: 0.35rem 0 0 0.75rem;
+			padding: 0 0 0.25rem 1rem;
 			border: none;
 			box-shadow: none;
 			background: transparent;
-			transform: none;
-			/* hide by default */
 			display: none;
 		}
 
@@ -788,10 +667,8 @@
 		}
 
 		.dropdown-link {
-			width: 100%;
-			font-size: 0.8rem;
-			padding: 0.45rem 0.75rem;
-			text-align: center;
+			font-size: 0.85rem;
+			padding: 0.5rem 1rem;
 		}
 	}
 

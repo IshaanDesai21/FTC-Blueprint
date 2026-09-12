@@ -2,36 +2,48 @@
 title: Android Studio Setup
 panelCategory: "Basics"
 date: 2026-04-02
-description: Complete set up guide for Android Studio on both Windows and Mac.
-tags: ["completed", "software", "beginner", "rookie", "video"]
+description: Installing Android Studio and opening the FTC SDK on Windows and Mac.
+tags: [completed, software, beginner, rookie]
 author: Blueprint
 published: true
 ---
 
-![image.png](/images/posts/basics-android-studio/1775352929725_image.png)
+![Android Studio](/images/posts/basics-android-studio/1775352929725_image.png)
 
-Android Studio is the IDE you'll use to write and deploy all of your FTC code. It's a full-featured Java development environment built on top of IntelliJ IDEA. Getting it set up properly the first time saves a lot of headaches later, so follow these steps carefully on your machine.
+Android Studio is the IDE used to write and deploy FTC code. It is built on IntelliJ IDEA and ships with the Android SDK and Gradle, which the FTC SDK needs to build.
 
-## Windows Setup
+## Windows
 
-To install Android Studio on a Windows machine:
+1. Download the Windows installer from the [Android Studio download page](https://developer.android.com/studio).
+2. Run the installer and accept the defaults.
+3. Clone or download the [FtcRobotController](https://github.com/FIRST-Tech-Challenge/FtcRobotController) repository.
+4. On the welcome screen, choose Open and select the repository folder.
+5. Wait for the Gradle sync to finish. The first sync downloads dependencies and can take serveral minutes.
 
-1. Visit the [Android Studio Download page](https://developer.android.com/studio).
-2. Download the executable installer for Windows.
-3. Once downloaded, run the installer and make sure you check the boxes for "Android SDK" and "Android Virtual Device" if they come up during install.
-4. Follow the setup wizard and accept the default locations. There's no need to customize anything here.
-5. Clone or download the FTC SDK repository from GitHub and open that folder from the Android Studio splash screen.
-6. Android Studio will spend a few minutes downloading Gradle dependencies the first time. Let it finish completely before you try to build anything. Once it says the sync is done, you're good to go.
+## Mac
 
-## Mac Setup
+1. Download the Mac build from the [Android Studio download page](https://developer.android.com/studio). Pick Apple Silicon for M-series chips and Intel for older Macs.
+2. Open the `.dmg` and drag Android Studio into Applications.
+3. Launch it and let the setup wizard install the SDK with the standard options.
+4. Clone or download the [FtcRobotController](https://github.com/FIRST-Tech-Challenge/FtcRobotController) repository.
+5. Open the repository folder from the welcome screen and wait for the Gradle sync to finish.
 
-To install Android Studio on a macOS machine:
+## Deploying to the Control Hub
 
-1. Visit the [Android Studio Download page](https://developer.android.com/studio).
-2. Choose the right download for your processor type. If you have a newer Mac with an M-series chip, pick Apple Silicon. If you have an older Intel Mac, pick the Intel version.
-3. Open the `.dmg` file once it downloads and drag Android Studio into your Applications folder.
-4. Open the app. The first time you launch it, a Setup Wizard will walk you through downloading the SDK. Just go with the standard options and let it do its thing.
-5. Open your cloned FTC SDK folder using the `Open...` option on the Welcome screen.
-6. Wait for the Gradle sync to finish, and your environment is ready.
+You can deploy over USB or over Wi-Fi.
 
-One thing to double-check on both platforms: make sure your OS can actually detect the REV Control Hub. On Windows you may need to install a USB driver. On Mac it usually works over Wi-Fi automatically, but if you're connecting via USB, make sure ADB (Android Debug Bridge) has the permissions it needs to communicate with the hub.
+For Wi-Fi, connect your computer to the Control Hub's Wi-Fi network, then run this in the Android Studio terminal:
+
+```bash
+adb connect 192.168.43.1:5555
+```
+
+The hub should then show up as a run target. Press Run to build and install the app.
+
+If the hub does not appear over USB on Windows, install the REV Hardware Client, which includes the USB driver.
+
+## Common problems
+
+- **Gradle sync fails.** Check your internet connection and make sure you opened the repository folder itself, not a folder inside it.
+- **Hub not found.** Make sure you are on the hub's Wi-Fi network and re-run the `adb connect` command. The connection drops when the hub reboots.
+- **Build error after updating the SDK.** Use File > Invalidate Caches and restart Android Studio, then sync again.

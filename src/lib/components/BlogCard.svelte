@@ -4,10 +4,7 @@
 
 	let { post, basePath }: { post: Post; basePath?: string } = $props();
 
-	const resolvedBasePath = $derived(
-		basePath || 
-		`/${(post.meta.tags?.find(t => ['software', 'hardware', 'outreach'].includes(t.toLowerCase())) || 'software').toLowerCase()}`
-	);
+	const resolvedBasePath = $derived(basePath || '/software');
 </script>
 
 <a href="{resolvedBasePath}/{post.slug}" class="card animate-fade-up" aria-label="Read {post.meta.title}">
@@ -73,7 +70,7 @@
 
 	.card:hover {
 		border-color: var(--text-primary);
-		transform: translateY(-3px);
+		transform: none;
 		box-shadow:
 			var(--glow-cyan),
 			0 8px 32px rgba(0, 0, 0, 0.2);
@@ -160,7 +157,7 @@
 		left: 0;
 		right: 0;
 		height: 2px;
-		background: var(--gradient-accent);
+		background: var(--text-primary);
 		transform: scaleX(0);
 		transform-origin: left;
 		transition: transform var(--transition-base);

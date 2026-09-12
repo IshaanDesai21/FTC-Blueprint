@@ -4,15 +4,11 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="theme-color" content="#1a1a1a" />
-		
-		<!-- SEO / Search Console Verification -->
-		<!-- Paste your Google Search Console verification code below -->
-		<!-- <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE_HERE" /> -->
-		
+
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 		<link
-			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
 			rel="stylesheet"
 		/>
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.14/dist/katex.min.css" integrity="sha384-qie8IrqbqaY2Hfd2tXYr8sbiTGuyYnXqugyAK7KWAteXtbbELC2qZDmiw3+k8o6v" crossorigin="anonymous">
@@ -21,17 +17,6 @@
 				const saved = localStorage.getItem('theme');
 				const theme = saved || 'light';
 				document.documentElement.className = theme;
-			})();
-		</script>
-		<script>
-			(function () {
-				const root = document.documentElement;
-				const textSize = localStorage.getItem('a11yTextSize');
-				if (textSize === 'large') root.classList.add('a11y-text-large');
-				if (textSize === 'xlarge') root.classList.add('a11y-text-xlarge');
-				if (localStorage.getItem('a11yReduceMotion') === 'true') root.classList.add('a11y-reduce-motion');
-				if (localStorage.getItem('a11yHighContrast') === 'true') root.classList.add('a11y-high-contrast');
-				if (localStorage.getItem('a11yUnderlineLinks') === 'true') root.classList.add('a11y-underline-links');
 			})();
 		</script>
 

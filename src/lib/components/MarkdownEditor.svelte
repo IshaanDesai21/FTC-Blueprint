@@ -193,7 +193,7 @@
 			}
 
 			if (isModel) {
-				insertTextAtCursor(`\n<model-viewer src="${url}" camera-controls auto-rotate shadow-intensity="1" style="width: 100%; height: 400px; background: #1a1a1a; border-radius: 8px;"></model-viewer>\n`);
+				insertTextAtCursor(`\n<model-viewer src="${url}" camera-controls auto-rotate shadow-intensity="1" style="width: 100%; height: 400px; background: #1a1a1a; border-radius: 0;"></model-viewer>\n`);
 			} else {
 				insertTextAtCursor(`\n![${file.name}](${url})\n`);
 			}
@@ -592,7 +592,7 @@
 	.edit-fab {
 		position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
 		display: flex; align-items: center; gap: 0.5rem;
-		background: var(--bg-card); border: 1px solid var(--border); border-radius: 999px;
+		background: var(--bg-card); border: 1px solid var(--border); border-radius: 0;
 		padding: 0.55rem 1.25rem; color: var(--text-secondary);
 		font-family: var(--font-sans); font-size: 0.82rem; font-weight: 500;
 		cursor: pointer; z-index: 900; box-shadow: 0 4px 16px rgba(0,0,0,0.25);
@@ -632,7 +632,7 @@
 	.tag-chip {
 		display: flex; align-items: center; gap: 0.4rem;
 		background: rgba(116, 215, 237, 0.1); border: 1px solid var(--accent-cyan);
-		color: var(--accent-cyan); padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.82rem;
+		color: var(--accent-cyan); padding: 0.3rem 0.75rem; border-radius: 0; font-size: 0.82rem;
 	}
 	.tag-chip-x {
 		background: none; border: none; color: inherit; cursor: pointer;
@@ -643,18 +643,18 @@
 	.tag-input-wrapper { display: flex; gap: 0.5rem; }
 	.tag-modal-input {
 		flex: 1; background: var(--bg-card); border: 1px solid var(--border);
-		border-radius: 8px; padding: 0.65rem 0.85rem; color: var(--text-primary); font-size: 0.9rem; outline: none;
+		border-radius: 0; padding: 0.65rem 0.85rem; color: var(--text-primary); font-size: 0.9rem; outline: none;
 	}
 	.tag-modal-input:focus { border-color: var(--accent-cyan); }
 	.tag-modal-add-btn {
-		background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+		background: var(--bg-card); border: 1px solid var(--border); border-radius: 0;
 		padding: 0 1rem; color: var(--text-primary); font-weight: 600; font-size: 0.85rem; cursor: pointer;
 	}
 	.presets-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: -0.75rem; }
 	.tag-modal-presets { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 	.preset-tag-btn {
 		background: var(--bg-card); border: 1px solid var(--border); padding: 0.4rem 0.85rem;
-		border-radius: 999px; font-size: 0.78rem; color: var(--text-secondary); cursor: pointer; transition: all 0.2s;
+		border-radius: 0; font-size: 0.78rem; color: var(--text-secondary); cursor: pointer; transition: all 0.2s;
 	}
 	.preset-tag-btn:hover { border-color: var(--tc); color: var(--tc); transform: translateY(-1px); }
 	.preset-tag-btn.active { border-color: var(--tc); background: var(--tc); color: #000; font-weight: 600; }
@@ -664,9 +664,9 @@
 		display: flex; flex-direction: column; gap: 1rem;
 	}
 	.footer-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
-	.cancel-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 0.55rem 1.25rem; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer; }
+	.cancel-btn { background: none; border: 1px solid var(--border); border-radius: 0; padding: 0.55rem 1.25rem; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer; }
 	.save-tags-btn {
-		background: var(--accent-green); color: #000; border: none; border-radius: 8px;
+		background: var(--accent-green); color: #000; border: none; border-radius: 0;
 		padding: 0.55rem 1.5rem; font-weight: 700; font-size: 0.85rem; cursor: pointer;
 	}
 	.save-tags-btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -687,7 +687,7 @@
 	.editor-badge {
 		background: var(--accent-cyan); color: #000;
 		font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
-		padding: 0.15rem 0.45rem; border-radius: 4px;
+		padding: 0.15rem 0.45rem; border-radius: 0;
 	}
 	.editor-filename {
 		font-family: var(--font-mono); font-size: 0.73rem; color: var(--text-muted);
@@ -699,7 +699,7 @@
 	.tag-chip-sm {
 		display: flex; align-items: center; gap: 0.2rem;
 		background: rgba(126,255,160,0.07); border: 1px solid var(--accent-green);
-		color: var(--accent-green); padding: 0.12rem 0.5rem; border-radius: 999px;
+		color: var(--accent-green); padding: 0.12rem 0.5rem; border-radius: 0;
 		font-size: 0.73rem; white-space: nowrap;
 	}
 	
@@ -715,26 +715,26 @@
 
 	.tag-popover {
 		position: absolute; top: calc(100% + 6px); left: 0; z-index: 3000;
-		background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+		background: var(--bg-card); border: 1px solid var(--border); border-radius: 0;
 		padding: 0.75rem; min-width: 260px; max-width: 320px;
 		box-shadow: 0 8px 24px rgba(0,0,0,0.45); display: flex; flex-direction: column; gap: 0.55rem;
 	}
 	.tag-popover-search-row { display: flex; gap: 0.4rem; }
 	.tag-popover-input {
 		flex: 1; background: var(--bg-secondary); border: 1px solid var(--border);
-		border-radius: 6px; padding: 0.38rem 0.65rem; color: var(--text-primary);
+		border-radius: 0; padding: 0.38rem 0.65rem; color: var(--text-primary);
 		font-size: 0.82rem; outline: none;
 	}
 	.tag-popover-input:focus { border-color: var(--accent-cyan); }
 	.tag-popover-add {
-		background: var(--accent-cyan); border: none; border-radius: 6px;
+		background: var(--accent-cyan); border: none; border-radius: 0;
 		padding: 0.38rem 0.8rem; font-weight: 700; font-size: 0.78rem;
 		cursor: pointer; color: #000; white-space: nowrap;
 	}
 	.tag-popover-presets { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 	.preset-tag-sm {
 		background: none; border: 1px solid var(--border); padding: 0.18rem 0.65rem;
-		border-radius: 999px; font-size: 0.74rem; color: var(--text-muted); cursor: pointer; transition: all 0.15s;
+		border-radius: 0; font-size: 0.74rem; color: var(--text-muted); cursor: pointer; transition: all 0.15s;
 	}
 	.preset-tag-sm:hover { border-color: var(--tc); color: var(--tc); }
 	.preset-tag-sm.active { border-color: var(--tc); background: var(--tc); color: #000; }
@@ -743,7 +743,7 @@
 	.header-right { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; margin-left: auto; }
 	.tab-row { display: flex; gap: 0.35rem; }
 	.tab-btn {
-		background: none; border: 1px solid transparent; border-radius: 6px;
+		background: none; border: 1px solid transparent; border-radius: 0;
 		padding: 0.32rem 0.65rem; font-size: 0.77rem; color: var(--text-muted);
 		cursor: pointer; transition: all 0.2s; white-space: nowrap;
 	}
@@ -754,7 +754,7 @@
 
 	.editor-actions { display: flex; align-items: center; gap: 0.6rem; }
 	.save-btn {
-		background: var(--accent-green); color: #111; border: none; border-radius: 6px;
+		background: var(--accent-green); color: #111; border: none; border-radius: 0;
 		padding: 0.42rem 1rem; font-weight: 700; font-size: 0.79rem; cursor: pointer;
 		display: flex; gap: 0.35rem; align-items: center; white-space: nowrap;
 	}
@@ -765,7 +765,7 @@
 	.editor-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 	.editor-loading { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; }
 	.editor-error { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; color: #f87171; font-size: 0.9rem; text-align: center; padding: 2rem; }
-	.retry-btn { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 1rem; color: var(--text-primary); cursor: pointer; font-size: 0.82rem; }
+	.retry-btn { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0; padding: 0.4rem 1rem; color: var(--text-primary); cursor: pointer; font-size: 0.82rem; }
 
 	.textarea-container { flex: 1; position: relative; display: flex; }
 	.editor-textarea {
@@ -818,9 +818,9 @@
 		.preview-container .markdown-body a { color: #7de0ff; text-decoration: underline; }
 		.preview-container .markdown-body ul, .preview-container .markdown-body ol { padding-left: 1.5rem; margin-bottom: 1rem; opacity: 0.85; }
 		.preview-container .markdown-body li { margin-bottom: 0.3rem; }
-		.preview-container .markdown-body img { max-width: 100%; border-radius: 8px; margin: 1.5rem 0; display: block; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-		.preview-container .markdown-body pre { background: #111; padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 1.5rem 0; font-size: 0.88rem; }
-		.preview-container .markdown-body code { background: rgba(255,255,255,0.08); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.87em; }
+		.preview-container .markdown-body img { max-width: 100%; border-radius: 0; margin: 1.5rem 0; display: block; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+		.preview-container .markdown-body pre { background: #111; padding: 1rem; border-radius: 0; overflow-x: auto; margin: 1.5rem 0; font-size: 0.88rem; }
+		.preview-container .markdown-body code { background: rgba(255,255,255,0.08); padding: 0.15rem 0.4rem; border-radius: 0; font-size: 0.87em; }
 		.preview-container .markdown-body blockquote { border-left: 3px solid #7de0ff; padding-left: 1rem; opacity: 0.75; margin: 1rem 0; }
 		.preview-container .markdown-body hr { border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 2rem 0; }
 		.preview-container .markdown-body table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }

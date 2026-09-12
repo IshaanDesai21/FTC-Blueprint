@@ -2,95 +2,67 @@
 title: Encoder Autonomous Introduction
 panelCategory: "Encoder Based"
 date: 2026-06-08
-description: Getting started with encoder-based autonomous operations.
+description: Motor encoders, run modes, and a first encoder-based autonomous.
 tags: [software, auto, beginner, completed]
 author: Blueprint
 published: true
 ---
 
-# Encoder Autonomous Introduction
+The autonomous period is the first 30 seconds of a match. The robot runs on its own. Encoders let you move a known distance instead of running motors for a fixed time.
 
-The Autonomous period is the first 30 seconds of every FTC match. During this time, your robot has to act entirely on its own. No drivers, no joysticks, no manual corrections. Whatever code you write beforehand is exactly what the robot will run.
+## Encoders
 
-Getting your robot to move predictably during autonomous is one of the most important skills in FTC. If your robot drifts off course or overshoots a target, it can cost you precious points. This is where encoders come in.
+An encoder counts how far the motor shaft has turned. The count is in ticks. Ticks per revolution depends on the motor:
 
----
+- goBILDA Yellow Jacket 312 RPM: 537.7 ticks per revolution
+- goBILDA Yellow Jacket 435 RPM: 383.6 ticks per revolution
 
-## What Is an Encoder?
+Check the product page for other motors. The encoder cable has to be plugged in to the encoder port that matchs the motor port.
 
-An encoder is a sensor built directly into the motor. As the motor shaft spins, the encoder counts how many times it rotates. These counts are called **ticks**. The more ticks, the more the motor has rotated.
+## Why not time
 
-The number of ticks per full revolution depends on which motor you are using:
+Running a motor at 0.5 power for one second covers a different distance depending on battery voltage, the floor, and how much the robot weighs. An encoder target covers the same distance every time.
 
-- **goBILDA Yellow Jacket 312 RPM:** 537.7 ticks per revolution
-- **goBILDA Yellow Jacket 435 RPM:** 383.6 ticks per revolution
+## Run modes
 
-By reading the tick count, your code can know exactly how far a motor has spun, which means you can calculate how far your robot has moved. This makes your autonomous consistent and repeatable, even across multiple matches.
+Every motor has a `RunMode`.
 
----
+- **`RUN_WITHOUT_ENCODER`**: raw power. Typical for TeleOp driving.
+- **`RUN_USING_ENCODER`**: the hub uses the encoder to hold a velocity. Power values become velocity targets. Use this between autonomous moves.
+- **`STOP_AND_RESET_ENCODER`**: sets the count to zero. Set this once at init.
+- **`RUN_TO_POSITION`**: the hub drives the motor to a target tick count and holds it. This is what encoder autonomous uses.
 
-## Why Use Encoders in Autonomous?
+## Reset at init
 
-You could write an autonomous that just sets motor power for a fixed amount of time. This is called time-based autonomous. The problem is that time-based movement is unreliable. Battery voltage changes throughout a match, friction varies by surface, and a slight bump from another robot can throw everything off.
-
-Encoder-based autonomous is far more consistent because it measures actual shaft rotation rather than guessing based on time. If you tell the robot to drive 24 inches, it will drive 24 inches regardless of battery level or minor surface differences.
-
----
-
-## The 4 RunModes
-
-Before you can use encoders effectively, you need to understand the four RunModes that the FTC SDK provides. Every motor has a `RunMode` that controls how it behaves.
-
-**`RUN_WITHOUT_ENCODER`**
-This mode ignores the encoder completely. The motor runs at whatever raw power you give it. This is what you typically use in TeleOp when you want direct joystick control.
-
-**`RUN_USING_ENCODER`**
-The encoder is active, but the motor uses it for velocity control, not position. This helps the motor maintain a more consistent speed even as the battery drains. You will use this mode as a resting state between movements in autonomous.
-
-**`STOP_AND_RESET_ENCODER`**
-This is not really a running mode. Setting this mode resets the encoder tick count back to zero. You should do this at the start of your autonomous to make sure you are starting from a known position.
-
-**`RUN_TO_POSITION`**
-This is the workhorse of encoder-based autonomous. You give the motor a target tick count, set a power level, and the motor drives until it reaches that position. It handles the stopping logic on its own.
-
----
-
-## Resetting Encoders at the Start
-
-Before you do anything else in your autonomous, reset all your drive motor encoders. This ensures your tick counts start at zero and your distance calculations are accurate.
+Encoder counts carry over from whatever ran last. Reset every drive motor before using positions, then switch to `RUN_USING_ENCODER`.
 
 ```java
 frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-```
 
-After resetting, switch to `RUN_USING_ENCODER` so your motors are ready to accept movement commands:
-
-```java
 frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 ```
 
-Skipping the reset is a common mistake. If your motors still have tick counts from a previous run, your distance calculations will be wrong from the start.
-
----
-
-## A Simple Example: Driving Forward
-
-Here is a minimal example showing how to drive forward using encoders. This gives you the basic idea before we build out full helper functions.
+## Example: drive forward
 
 ```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
 @Autonomous(name = "Encoder Intro Example")
 public class EncoderIntroExample extends LinearOpMode {
 
     DcMotor frontLeft, frontRight, backLeft, backRight;
 
-    // Approximate ticks per inch for goBILDA 312 RPM with 96mm mecanum wheels
-    // You should calibrate this value for your specific robot!
+    // 312 RPM motor, 96 mm wheel. Measure this for your robot.
     static final double TICKS_PER_INCH = 45.0;
 
     @Override
@@ -100,17 +72,14 @@ public class EncoderIntroExample extends LinearOpMode {
         backLeft   = hardwareMap.get(DcMotor.class, "backLeft");
         backRight  = hardwareMap.get(DcMotor.class, "backRight");
 
-        // Set motor directions for a typical mecanum drivetrain
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         backLeft.setDirection(DcMotor.Direction.REVERSE);
 
-        // Reset encoders
         frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        // Ready to run
         frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -118,8 +87,7 @@ public class EncoderIntroExample extends LinearOpMode {
 
         waitForStart();
 
-        // Drive forward 24 inches
-        int ticks = (int)(24 * TICKS_PER_INCH);
+        int ticks = (int) (24 * TICKS_PER_INCH);
 
         frontLeft.setTargetPosition(ticks);
         frontRight.setTargetPosition(ticks);
@@ -136,14 +104,12 @@ public class EncoderIntroExample extends LinearOpMode {
         backLeft.setPower(0.5);
         backRight.setPower(0.5);
 
-        // Wait until motors reach their target
-        while (opModeIsActive() && (frontLeft.isBusy() && frontRight.isBusy())) {
-            telemetry.addData("Front Left Ticks", frontLeft.getCurrentPosition());
-            telemetry.addData("Front Right Ticks", frontRight.getCurrentPosition());
+        while (opModeIsActive() && frontLeft.isBusy() && frontRight.isBusy()) {
+            telemetry.addData("Front Left", frontLeft.getCurrentPosition());
+            telemetry.addData("Front Right", frontRight.getCurrentPosition());
             telemetry.update();
         }
 
-        // Stop all motors
         frontLeft.setPower(0);
         frontRight.setPower(0);
         backLeft.setPower(0);
@@ -152,13 +118,16 @@ public class EncoderIntroExample extends LinearOpMode {
 }
 ```
 
-Notice that you call `setTargetPosition()` before switching to `RUN_TO_POSITION`. That order matters. You also need to check both `opModeIsActive()` and `isBusy()` in your while loop. The `opModeIsActive()` check makes sure your code stops cleanly when the 30-second period ends.
+`setTargetPosition()` has to be called before switching to `RUN_TO_POSITION`, or the SDK throws an exception. The wait loop checks `opModeIsActive()` as well as `isBusy()` so the OpMode exits cleanly when Stop is pressed.
 
----
+## Ticks per inch
 
-## What Comes Next
+```
+ticks per inch = ticks per revolution / (wheel diameter in inches * pi)
+```
 
-This example works, but writing `setTargetPosition` for all four motors every time you want to move gets repetitive fast. The next two guides show you how to clean this up with helper functions.
+For a 537.7 tick motor on a 96 mm (3.78 in) wheel that is 537.7 / 11.87 = 45.3. Then measure. Command 48 inches, measure the actual distance, and scale the constant by `48 / actual`.
 
-- **Drivetrain Functions:** How to write reusable `driveForward`, `strafeRight`, and `turnRight` methods that handle all the motor setup for you.
-- **Subsystem Functions:** How to control arms, claws, and linear slides using the same encoder patterns.
+## Next
+
+[Drivetrain Functions](/software/encoder-autonomous-drivetrain-functions) wraps this in `driveForward`, `strafeRight`, and `turnRight` methods. [Subsystem Functions](/software/encoder-autonomous-subsystem-functions) does the same for arms, slides, and claws.

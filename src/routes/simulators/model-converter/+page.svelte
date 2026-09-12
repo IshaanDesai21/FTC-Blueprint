@@ -615,7 +615,7 @@
 		padding: 0.25rem 0.6rem;
 		background: var(--bg-secondary);
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: 0;
 		font-family: var(--font-mono);
 		font-size: 0.72rem;
 		color: var(--text-secondary);

@@ -2,53 +2,55 @@
 title: Bulk Reads
 panelCategory: "Miscellaneous"
 date: 2026-05-18
-description: Optimizing your FTC robot's control loop with LynxModule bulk reading.
+description: Reading all hub sensor data in one command with LynxModule bulk caching.
 tags: [completed, software, intermediate, performance]
 author: Blueprint
 published: true
 ---
 
-Bulk reading is one of the most impactful optimizations you can make to your robot code, and it only takes a few lines to set up.
+Every call like `motor.getCurrentPosition()` sends a separate command to the hub and waits for the reply. A loop that reads several encoders and sensors spends most of its time waiting.
 
-Here is the problem: in a standard FTC OpMode, every time you call something like `motor.getCurrentPosition()`, the SDK sends a separate request over I2C or serial to the Control Hub or Expansion Hub, then waits for a response. Do that a dozen times per loop iteration and your loop slows to a crawl. You end up running at 40-60 Hz when you could be running much faster.
+Bulk reads fetch all of a hub's encoder and sensor data in one command. Later reads in the same loop come from that cached snapshot.
 
-Bulk reads solve this by fetching all of the hub's data (encoder positions, sensor values, everything) in a single efficient request. Your code then reads from that cached snapshot instead of making individual hardware calls.
+## Setup
 
-## Setting It Up
-
-You access bulk reads through the `LynxModule` class, which represents each REV hub in your system.
+Each REV hub is a `LynxModule`. Set the caching mode on all of them during init.
 
 ```java
-public void initBulkReads() {
-    List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
+import com.qualcomm.hardware.lynx.LynxModule;
+import java.util.List;
 
-    for (LynxModule hub : allHubs) {
-        hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-    }
-}
-```
+List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
 
-Call this once during initialization and you are done. That is all you need for the most common use case.
-
-## The Three Modes
-
-There are three caching modes to choose from. They differ in how and when the cached data gets refreshed.
-
-**OFF** is the default. No bulk reading happens at all. Every sensor or motor read is its own separate hardware call. This is the slowest option and there is almost never a reason to stay in this mode intentionally.
-
-**AUTO** is the mode most teams should use. The SDK automatically performs a bulk read when it needs fresh data and clears the cache once per control loop iteration. You get a massive speed boost with zero extra code in your loop. Start here.
-
-**MANUAL** gives you the most control. You are responsible for clearing the cache yourself at the start of each loop iteration. This guarantees you always have fresh data and lets you control exactly when the hub gets queried. It is more work, but it is the right choice for performance-critical code like odometry.
-
-```java
-// At the start of your while(opModeIsActive()) loop:
 for (LynxModule hub : allHubs) {
-    hub.clearBulkCache();
+    hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
 }
 ```
 
-Make sure you hold onto the `allHubs` list as a field so you can access it inside the loop.
+That is all that is needed for `AUTO` mode.
 
-## Why This Matters
+## Modes
 
-The difference is real. Without bulk reads, a typical loop runs at 40-60 Hz. With AUTO or MANUAL mode enabled, you can hit 100-200 Hz depending on how much else your code is doing. Faster loops mean your PID controllers react more quickly and your odometry stays more accurate. For competitive teams running tight autonomous routines, this is worth doing.
+**OFF** is the default. Every read is its own command.
+
+**AUTO** refreshes the cache whenever you read a value that has already been read from the current cache. If you read each encoder once per loop, you get one bulk read per loop. If you read the same encoder twice in one loop, the second read triggers another bulk read.
+
+**MANUAL** never refreshes on its own. You clear the cache at the top of every loop. If you forget, every read returns the same stale values for the rest of the OpMode.
+
+```java
+while (opModeIsActive()) {
+    for (LynxModule hub : allHubs) {
+        hub.clearBulkCache();
+    }
+
+    // reads go here
+}
+```
+
+Keep `allHubs` as a field so the loop can reach it.
+
+## Which mode to use
+
+Use `AUTO` unless you have a reason not to. Use `MANUAL` when you want exactly one hub read per loop no matter how your code is structured, which matters for odometry and any code that reads the same encoder in more then one place.
+
+Bulk reads only cover data the hub reports in its bulk packet: motor encoders, motor velocity, digital inputs, and analog inputs. I2C sensors like the color sensor and distance sensor are not included and still cost a separate read each.

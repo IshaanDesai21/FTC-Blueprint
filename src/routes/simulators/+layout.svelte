@@ -38,16 +38,11 @@
 				<line x1="9" x2="15" y1="15" y2="15" />
 			</svg>
 			<h2>Desktop Recommended</h2>
-			<p>
-				Blueprint simulators contain complex kinematics, 3D renders, and interactive graphing elements that are deeply optimized for a keyboard, a precise cursor, and a wide display.
-			</p>
-			<p>
-				For the best experience, please view this tool on a computer or laptop!
-			</p>
+			<p>This simulator needs a keyboard and a wide screen. Open it on a computer.</p>
 
 			<div class="buttons">
-				<a href="/" class="btn-primary">Return Home</a>
-				<button class="btn-secondary" onclick={closeWarning}>Dismiss & Try Anyway</button>
+				<a href="/software" class="btn-primary">Back to docs</a>
+				<button class="btn-secondary" onclick={closeWarning}>Continue anyway</button>
 			</div>
 		</div>
 	</div>

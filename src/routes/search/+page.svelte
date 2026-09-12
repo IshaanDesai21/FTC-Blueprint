@@ -131,7 +131,7 @@
 				<input
 					id="main-search-input"
 					type="text"
-					placeholder="Search for articles, prints, or keywords..."
+					placeholder="Search articles"
 					bind:value={displayQuery}
 					oninput={handleMainInput}
 					class="search-input"
@@ -148,9 +148,9 @@
 			{:else}
 				<div class="empty-state animate-fade-up">
 					<h3>No results found</h3>
-					<p>Couldn't find what you were looking for? We can write it!</p>
+					<p>No articles match that search.</p>
 					<div style="display:flex; justify-content:center; gap:1rem;">
-						<a href="/suggest" class="btn">Suggest a Print</a>
+						<a href="/suggest" class="btn">Suggest a Guide</a>
 						<a
 							href="/software"
 							class="btn btn-ghost"
@@ -206,7 +206,7 @@
 		font-size: 1.15rem;
 		transition: all var(--transition-base);
 		outline: none;
-		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+		box-shadow: none;
 	}
 
 	.search-input:focus {
@@ -233,7 +233,7 @@
 		padding: 4rem 2rem;
 		background: var(--bg-card);
 		border-radius: var(--radius-lg);
-		border: 1px dashed var(--border);
+		border: 1px solid var(--border);
 	}
 
 	.empty-state h3 {
@@ -249,8 +249,8 @@
 	.btn {
 		display: inline-block;
 		padding: 0.8rem 1.5rem;
-		background: var(--gradient-accent);
-		color: white;
+		background: var(--text-primary);
+		color: var(--bg);
 		border-radius: var(--radius-md);
 		font-family: var(--font-sans);
 		font-weight: 600;
@@ -258,6 +258,6 @@
 	}
 
 	.btn:hover {
-		transform: translateY(-2px);
+		transform: none;
 	}
 </style>

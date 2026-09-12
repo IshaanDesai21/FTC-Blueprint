@@ -2,59 +2,49 @@
 title: Basics of Wiring and Configuration
 panelCategory: "Basics"
 date: 2026-04-08
-description: Essential guide to wiring your FTC robot and configuring it in the app.
-tags: [completed, software, beginner, manual, completed]
+description: Connecting motors, servos, and sensors to the hub and configuring them in the Driver Station app.
+tags: [completed, software, beginner, manual]
 author: Blueprint
 published: true
 ---
 
-# Basics of Wiring and Configuration
+Before code can run, every device has to be plugged into the correct port and named in the robot configuration. Most "my motor doesn't work" problems at competition are wiring or configuration, not code.
 
-Before any code runs, your robot needs to be wired correctly. Bad wiring is one of the most common sources of problems at competitions. A connector that's halfway seated can look fine on the practice field and then pop out in the middle of a match. This guide walks through how to connect your hardware to the Control Hub or Expansion Hub, and then how to tell your code what's plugged in where.
+## Wiring
 
----
+### Motors
 
-## Wiring Your Robot
+Motors plug into the motor ports on the Control Hub or Expansion Hub. The motor port uses a JST VH connector. The encoder cable plugs into the 4-pin encoder port next to the same motor port. A motor and its encoder must be on the same port number or the encoder reads the wrong motor.
 
-### 1. Connecting Motors
+### Servos
 
-Motors plug into the motor ports on the Control Hub or Expansion Hub. Each port has a specific connector type, usually Anderson Powerpole or JST-VH depending on your motor. Make sure you're using the right cable for your specific motor. Plugging in the wrong connector type can damage the port.
+Servos use the 3-pin servo ports. The connector is not keyed, so match the wire colors to the markings on the hub. If a servo is plugged in backwards it will not move.
 
-### 2. Connecting Servos
+### Sensors
 
-Servo cables go into the servo ports. This part trips people up a lot: the black (ground) wire on the servo connector needs to be on the outside edge of the port. If you plug it in backwards you won't damage anything, but the servo won't move either.
+- **I2C** ports are for color sensors, distance sensors, and other devices that send data over a bus.
+- **Digital** ports are for on/off devices like touch sensors and limit switches.
+- **Analog** ports are for devices that output a voltage, like potentiometers.
 
-### 3. Connecting Sensors
+Check the manufacturer's product page if you are not sure which port a sensor uses.
 
-Most FTC sensors connect through one of three port types. I2C ports handle sensors that need to communicate more complex data, like the built-in IMU, color sensors, and distance sensors. Digital ports are for simple on/off signals like touch sensors and limit switches. Analog ports handle sensors that output a variable voltage, like potentiometers.
+## Configuration
 
-If you're not sure which port type your sensor uses, check the product page from the manufacturer. REV and other vendors usually list it right in the specs.
+The Robot Controller needs to know what is plugged into each port. This is the robot configuration.
 
----
+1. In the Driver Station app, open the menu and choose **Configure Robot**.
+2. Tap **New**. The app scans for connected hubs and lists them.
+3. For each port that has a device, select the device type and give it a name.
+4. Save the configuration and activate it.
 
-## Configuring Your Robot in the App
-
-Once everything is wired up, the FTC Robot Controller app needs to know what's connected to which port. This is called the robot configuration. If you skip this step or get the names wrong, your code won't be able to find your devices at runtime.
-
-### 1. Accessing the Configuration
-
-On the Driver Station app, go to **Settings > Configure Robot**. This opens the configuration manager.
-
-### 2. Creating a Configuration
-
-Tap **New** to start a fresh configuration. The app will scan for any hubs that are connected and show them on screen.
-
-### 3. Naming Your Devices
-
-For each port that has something plugged in, select the device type and give it a name. This name is critically important. It has to match exactly, character for character, the string you pass to `hardwareMap.get()` in your Java code. Capitalization counts.
+The name you type here must match the string passed to `hardwareMap.get()` exactly, including capitalization.
 
 ```java
-// Example: The name "leftDrive" in the app must match here
 DcMotor leftDrive = hardwareMap.get(DcMotor.class, "leftDrive");
 ```
 
-Pick names that are descriptive and consistent across your codebase. Something like `frontLeft` or `armMotor` is much easier to track down than `motor1`.
+Use names that describe the device, like `frontLeft` or `armMotor`. If the name in code does not match the configuration, the OpMode will crash on init with a message saying the device could not be found.
 
----
+## Before every match
 
-> After every build session, give your wiring a physical tug test. Every connector should be fully seated and snug. Vibration during a match is surprisingly violent, and loose connectors are responsible for more robot failures than bad code.
+Pull on every connector. Anything that moves isnt seated. Loose motor and encoder cables are the most common cause of a robot dying mid-match, and they are easy to catch beforehand.

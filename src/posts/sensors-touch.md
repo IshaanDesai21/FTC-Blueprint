@@ -2,22 +2,17 @@
 title: Touch Sensor
 panelCategory: "Sensors"
 date: 2026-05-03
-description: Simple digital inputs for limit switches and button presses.
+description: Reading the REV Touch Sensor and using it as a limit switch.
 tags: [software, completed, beginner]
 author: Blueprint
 published: true
 ---
 
-The touch sensor is a simple digital switch. It either says "pressed" or "not pressed." That's it. Simple, reliable, and really useful.
+The touch sensor is a digital switch. It reports pressed or not pressed.
 
-> [!NOTE]
-> Even though it's called a "Touch" sensor, you can use it exactly like a limit switch or a button. Use the `TouchSensor` class and call `isPressed()`, which returns `true` when the sensor is being pressed.
+## Setup
 
----
-
-## Setting It Up
-
-Initialize the sensor using the `TouchSensor` class. No mode setting required, and `isPressed()` gives you a clean `true`/`false` without any inverted logic to worry about.
+Configure it as a REV Touch Sensor on a digital port. In code, use `TouchSensor` and `isPressed()`.
 
 ```java
 import com.qualcomm.robotcore.hardware.TouchSensor;
@@ -25,55 +20,50 @@ import com.qualcomm.robotcore.hardware.TouchSensor;
 TouchSensor touchSensor = hardwareMap.get(TouchSensor.class, "touchSensor");
 ```
 
-Reading the state is straightforward:
-
 ```java
 if (touchSensor.isPressed()) {
-    telemetry.addData("Touch", "IS PRESSED");
+    telemetry.addData("Touch", "Pressed");
 } else {
-    telemetry.addData("Touch", "Not Pressed");
+    telemetry.addData("Touch", "Not pressed");
 }
 ```
 
-## Using It as a Limit Switch
+## Limit switch
 
-This is one of the best uses for a touch sensor. If you have a lift or an arm, put a touch sensor at the bottom (or top) of its travel range. When the mechanism hits the sensor, you can do two things:
+Mount the sensor at the bottom of a lift or arm's travel. When it is pressed:
 
-1. **Stop the motor** right away to prevent damage.
-2. **Reset the encoder** to zero so your software always knows exactly where it is.
+1. Stop the motor so it does not drive into the hard stop.
+2. Reset the encoder to zero so the position is known.
 
 ```java
-if (touchSensor.isPressed() && slideMotor.getPower() < 0) {
-    // Stop and zero the encoder when it hits the bottom
+if (touchSensor.isPressed() && slidePower < 0) {
+    slideMotor.setPower(0);
     slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 }
 ```
 
-This is really valuable during autonomous. If you reset the encoder every time the lift hits the bottom, your position tracking stays accurate even if something slips during a match.
+Resetting on every bottom-out means the encoder stays correct even if the belt slips during a match.
 
-## Single-Press Logic (Debouncing)
+## Acting once per press
 
-If you want to toggle something when the sensor is pressed, you need to make sure it only triggers once per press instead of firing every loop iteration. The trick is to compare the current state to the previous state and only act when the state changes from unpressed to pressed.
+`isPressed()` is true for every loop while the button is held. To do something once per press, compare to the value from the last loop and act only when it changes from false to true.
 
 ```java
-boolean lastState = false;
+boolean lastPressed = false;
 boolean clawOpen = false;
 
-// Inside your loop:
-boolean currentState = touchSensor.isPressed();
-if (currentState && !lastState) {
-    // This only runs the moment the sensor is FIRST pressed
+// inside the loop
+boolean pressed = touchSensor.isPressed();
+if (pressed && !lastPressed) {
     clawOpen = !clawOpen;
 }
-lastState = currentState;
+lastPressed = pressed;
 ```
 
-This pattern, called debouncing, works the same way whether you're using a touch sensor, a gamepad button, or any other on/off input.
+This is rising edge detection. The same pattern works for gamepad buttons.
 
----
-
-Here is a complete example that uses the touch sensor as a limit switch for a simple lift motor.
+## Example
 
 ```java
 package org.firstinspires.ftc.teamcode;
@@ -83,7 +73,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-@TeleOp(name = "Touch Sensor Limit Switch Example", group = "Sensor")
+@TeleOp(name = "Touch Sensor Limit Switch")
 public class TouchSensorExample extends LinearOpMode {
 
     private TouchSensor limitSwitch;
@@ -91,40 +81,30 @@ public class TouchSensorExample extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        // 1. Initialize hardware
         limitSwitch = hardwareMap.get(TouchSensor.class, "touchSensor");
         liftMotor = hardwareMap.get(DcMotor.class, "liftMotor");
-
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
 
         waitForStart();
 
         while (opModeIsActive()) {
-            // 2. Control motor with joystick
             double liftPower = -gamepad1.left_stick_y;
+            boolean pressed = limitSwitch.isPressed();
 
-            // 3. Limit switch logic: isPressed() returns true when pressed
-            boolean isPressed = limitSwitch.isPressed();
-
-            if (isPressed && liftPower < 0) {
-                // At the bottom, stop and reset encoder
+            if (pressed && liftPower < 0) {
                 liftMotor.setPower(0);
                 liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 liftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                telemetry.addData("Limit", "LIFT AT BOTTOM");
             } else {
                 liftMotor.setPower(liftPower);
-                telemetry.addData("Limit", "Normal Operation");
             }
 
-            // 4. Telemetry output
             telemetry.addData("Lift Power", "%.2f", liftPower);
-            telemetry.addData("Switch Pressed", isPressed);
+            telemetry.addData("Pressed", pressed);
+            telemetry.addData("Position", liftMotor.getCurrentPosition());
             telemetry.update();
         }
     }
 }
 ```
 
----
+The lift can still move up while the switch is pressed, only downward power is blocked.

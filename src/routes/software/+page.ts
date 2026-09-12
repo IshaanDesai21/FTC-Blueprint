@@ -1,6 +1,4 @@
-import { getAllPosts } from '$lib/utils/posts';
-
-export async function load() {
-	const posts = await getAllPosts();
-	return { posts: posts.filter((p) => (p.meta.tags || []).includes('software')) };
+export async function load({ parent }) {
+	const { allPosts } = await parent();
+	return { posts: allPosts.filter((p) => (p.meta.tags || []).includes('software')) };
 }

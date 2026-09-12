@@ -4,7 +4,7 @@
 	let {
 		posts,
 		section
-	}: { posts: Post[]; section: 'software' | 'hardware' | 'outreach' } = $props();
+	}: { posts: Post[]; section: 'software' } = $props();
 
 	// Only real, published pages
 	const pages = $derived(posts.filter((p) => (p.meta.tags || []).includes('completed')));

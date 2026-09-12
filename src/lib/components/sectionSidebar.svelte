@@ -182,7 +182,7 @@
 		left: 0;
 		width: 100%;
 		height: 2px;
-		background: var(--accent-green);
+		background: var(--text-primary);
 		transform: scaleX(0);
 		transform-origin: left;
 		transition: transform 0.3s ease;

@@ -130,7 +130,7 @@
 		width: 390px;
 		height: 844px;
 		max-height: 90vh;
-		border-radius: 20px;
+		border-radius: 0;
 	}
 
 	.device-frame iframe {

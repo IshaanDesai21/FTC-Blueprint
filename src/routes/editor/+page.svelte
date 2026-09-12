@@ -388,7 +388,7 @@
 					imageMap.set(id, url);
 					url = `data:asset/...#${id}`;
 				}
-				const html = `\n<model-viewer src="${url}" camera-controls auto-rotate shadow-intensity="1" style="width: 100%; height: 400px; background: #1a1a1a; border-radius: 8px;"></model-viewer>\n`;
+				const html = `\n<model-viewer src="${url}" camera-controls auto-rotate shadow-intensity="1" style="width: 100%; height: 400px; background: #1a1a1a; border-radius: 0;"></model-viewer>\n`;
 				insertRaw(html);
 			} else {
 				pendingImageUrl = finalUrl;
@@ -434,7 +434,7 @@
 			url = `data:asset/...#${id}`;
 		}
 		
-		const html = `\n<img src="${url}" alt="${imageAlt}" style="width: ${w}; ${m} display: block; border-radius: 8px;" />\n`;
+		const html = `\n<img src="${url}" alt="${imageAlt}" style="width: ${w}; ${m} display: block; border-radius: 0;" />\n`;
 		insertRaw(html);
 		showImageDialog = false;
 		pendingImageUrl = '';
@@ -924,7 +924,7 @@ Start writing here...
 		gap: 5px;
 		background: var(--accent-cyan-dim);
 		border: 1px solid var(--accent-cyan-dim);
-		border-radius: 6px;
+		border-radius: 0;
 		padding: 4px 10px;
 		color: var(--accent-cyan);
 		font-size: 12px;
@@ -952,7 +952,7 @@ Start writing here...
 		width: 100%;
 		background: var(--bg-card-hover);
 		border: 1px solid var(--border);
-		border-radius: 6px;
+		border-radius: 0;
 		padding: 6px 10px 6px 28px;
 		color: var(--text-body);
 		font-size: 12px;
@@ -1079,7 +1079,7 @@ Start writing here...
 		gap: 6px;
 		background: none;
 		border: 1px solid transparent;
-		border-radius: 6px;
+		border-radius: 0;
 		padding: 5px 12px;
 		color: var(--text-secondary);
 		font-size: 12.5px;
@@ -1103,14 +1103,14 @@ Start writing here...
 		color: var(--text-muted);
 		background: var(--bg-card-hover);
 		border: 1px solid var(--border);
-		border-radius: 4px;
+		border-radius: 0;
 		padding: 2px 8px;
 	}
 
 	.toggle-preview-btn {
 		background: none;
 		border: 1px solid var(--border);
-		border-radius: 6px;
+		border-radius: 0;
 		padding: 4px 10px;
 		color: var(--text-secondary);
 		font-size: 11.5px;
@@ -1122,7 +1122,7 @@ Start writing here...
 	.export-btn {
 		background: none;
 		border: 1px solid var(--accent-cyan-dim);
-		border-radius: 6px;
+		border-radius: 0;
 		padding: 5px 12px;
 		color: var(--accent-cyan);
 		font-size: 12px;
@@ -1140,7 +1140,7 @@ Start writing here...
 		background: var(--accent-cyan);
 		color: #000;
 		border: none;
-		border-radius: 6px;
+		border-radius: 0;
 		padding: 5px 14px;
 		font-weight: 700;
 		font-size: 12px;
@@ -1158,7 +1158,7 @@ Start writing here...
 
 	.save-btn kbd {
 		background: rgba(0, 0, 0, 0.1);
-		border-radius: 3px;
+		border-radius: 0;
 		padding: 0 4px;
 		font-size: 10px;
 		opacity: 0.7;
@@ -1203,7 +1203,7 @@ Start writing here...
 	.fm-input {
 		background: var(--bg-card-hover);
 		border: 1px solid var(--border);
-		border-radius: 7px;
+		border-radius: 0;
 		padding: 8px 12px;
 		color: var(--text-body);
 		font-size: 13px;
@@ -1221,7 +1221,7 @@ Start writing here...
 	.chip {
 		display: flex; align-items: center; gap: 4px;
 		background: var(--accent-cyan-dim); border: 1px solid var(--accent-cyan-dim);
-		color: var(--accent-cyan); padding: 3px 10px; border-radius: 999px; font-size: 11.5px;
+		color: var(--accent-cyan); padding: 3px 10px; border-radius: 0; font-size: 11.5px;
 	}
 	.chip-x {
 		background: none; border: none; color: inherit;
@@ -1235,7 +1235,7 @@ Start writing here...
 	.tag-add-btn {
 		background: var(--border);
 		border: 1px solid var(--border);
-		border-radius: 7px;
+		border-radius: 0;
 		padding: 7px 14px;
 		color: var(--text-secondary);
 		font-size: 12px;
@@ -1249,7 +1249,7 @@ Start writing here...
 	.preset-tag {
 		background: var(--bg-card-hover);
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: 0;
 		padding: 3px 10px;
 		font-size: 11px;
 		color: var(--text-secondary);
@@ -1275,7 +1275,7 @@ Start writing here...
 	.toggle-track {
 		width: 36px; height: 20px;
 		background: var(--border);
-		border-radius: 999px;
+		border-radius: 0;
 		position: relative;
 		transition: background 0.2s;
 	}
@@ -1296,7 +1296,7 @@ Start writing here...
 		color: var(--text-muted);
 		background: var(--bg-card-hover);
 		border: 1px solid var(--border);
-		border-radius: 6px;
+		border-radius: 0;
 		padding: 6px 10px;
 		display: inline-flex;
 		align-items: center;
@@ -1308,7 +1308,7 @@ Start writing here...
 	.unlock-input {
 		background: var(--bg-card-hover);
 		border: 1px solid var(--border);
-		border-radius: 7px;
+		border-radius: 0;
 		padding: 6px 10px;
 		color: var(--text-secondary);
 		font-size: 12px;
@@ -1323,7 +1323,7 @@ Start writing here...
 		align-self: flex-start;
 		background: var(--accent-cyan-dim);
 		border: 1px solid var(--accent-cyan-dim);
-		border-radius: 8px;
+		border-radius: 0;
 		padding: 8px 18px;
 		color: var(--accent-cyan);
 		font-weight: 600;
@@ -1348,7 +1348,7 @@ Start writing here...
 	.tool-btn {
 		background: none;
 		border: 1px solid transparent;
-		border-radius: 5px;
+		border-radius: 0;
 		padding: 3px 8px;
 		color: var(--text-secondary);
 		font-size: 12px;
@@ -1421,7 +1421,7 @@ Start writing here...
 	/* prose overrides for preview */
 	.preview-inner :global(h1), .preview-inner :global(h2), .preview-inner :global(h3) {
 		color: var(--text-primary);
-		font-family: 'Space Grotesk', 'Inter', system-ui;
+		font-family: var(--font-sans);
 		margin-top: 2rem;
 		margin-bottom: 0.6rem;
 	}
@@ -1430,13 +1430,13 @@ Start writing here...
 	.preview-inner :global(h3) { font-size: 1.1rem; }
 	.preview-inner :global(p) { margin-bottom: 1rem; }
 	.preview-inner :global(a) { color: var(--accent-cyan); text-decoration: underline; }
-	.preview-inner :global(code) { background: var(--border); padding: 2px 6px; border-radius: 4px; font-size: 0.87em; color: var(--accent-green); }
-	.preview-inner :global(pre) { background: var(--bg-card-hover); padding: 1rem 1.25rem; border-radius: 8px; overflow-x: auto; margin: 1.5rem 0; }
+	.preview-inner :global(code) { background: var(--border); padding: 2px 6px; border-radius: 0; font-size: 0.87em; color: var(--accent-green); }
+	.preview-inner :global(pre) { background: var(--bg-card-hover); padding: 1rem 1.25rem; border-radius: 0; overflow-x: auto; margin: 1.5rem 0; }
 	.preview-inner :global(pre code) { background: none; padding: 0; color: var(--text-body); }
 	.preview-inner :global(blockquote) { border-left: 3px solid var(--border); padding-left: 1rem; color: var(--text-secondary); margin: 1rem 0; font-style: italic; }
 	.preview-inner :global(ul), .preview-inner :global(ol) { padding-left: 1.5rem; margin-bottom: 1rem; }
 	.preview-inner :global(li) { margin-bottom: 0.35rem; }
-	.preview-inner :global(img) { max-width: 100%; border-radius: 6px; margin: 1.25rem 0; display: block; }
+	.preview-inner :global(img) { max-width: 100%; border-radius: 0; margin: 1.25rem 0; display: block; }
 	.preview-inner :global(table) { border-collapse: collapse; width: 100%; margin: 1.5rem 0; }
 	.preview-inner :global(th) { background: var(--border); padding: 6px 12px; border-bottom: 1px solid var(--border); text-align: left; }
 	.preview-inner :global(td) { padding: 6px 12px; border-bottom: 1px solid var(--border); }
@@ -1475,7 +1475,7 @@ Start writing here...
 	.dialog {
 		background: var(--bg-card);
 		border: 1px solid var(--border);
-		border-radius: 14px;
+		border-radius: 0;
 		width: 100%;
 		max-width: 460px;
 		display: flex;
@@ -1523,7 +1523,7 @@ Start writing here...
 	.cancel-btn {
 		background: none;
 		border: 1px solid var(--border);
-		border-radius: 7px;
+		border-radius: 0;
 		padding: 6px 16px;
 		color: var(--text-secondary);
 		font-size: 12.5px;
@@ -1539,7 +1539,7 @@ Start writing here...
 		padding: 8px 12px;
 		background: rgba(116, 215, 237, 0.05);
 		border: 1px solid rgba(116, 215, 237, 0.15);
-		border-radius: 8px;
+		border-radius: 0;
 		color: var(--accent-cyan);
 		font-size: 11.5px;
 		margin: 4px 0 2px;
@@ -1550,20 +1550,20 @@ Start writing here...
 
 	.img-preview-wrap {
 		background: var(--bg-card-hover);
-		border-radius: 8px;
+		border-radius: 0;
 		padding: 12px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		margin-bottom: 4px;
 	}
-	.img-preview { max-height: 160px; max-width: 100%; border-radius: 6px; }
+	.img-preview { max-height: 160px; max-width: 100%; border-radius: 0; }
 
 	.btn-group { display: flex; gap: 5px; }
 	.seg-btn {
 		background: var(--bg-card-hover);
 		border: 1px solid var(--border);
-		border-radius: 6px;
+		border-radius: 0;
 		padding: 5px 12px;
 		color: var(--text-secondary);
 		font-size: 12px;
