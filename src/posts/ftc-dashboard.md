@@ -80,7 +80,7 @@ public class LiftPIDTuner extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        DcMotor lift = hardwareMap.get(DcMotor.class, "liftMotor");
+        DcMotor lift = hardwareMap.get(DcMotor.class, "lift_motor");
         lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 

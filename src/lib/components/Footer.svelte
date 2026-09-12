@@ -13,7 +13,7 @@
 		</div>
 
 		<nav class="footer-nav" aria-label="Footer navigation">
-			<a href="/software">Software</a>
+			<a href="/">Software</a>
 			<a href="/simulators/pid">Simulators</a>
 			<a href="/complete-rookie-guide">Rookie Guide</a>
 			<a href="/review">Get a Free Review</a>

@@ -8,37 +8,51 @@ author: Blueprint
 published: true
 ---
 
-The REV 2m Distance Sensor is a time-of-flight sensor. It sends an infrared pulse and measures how long it takes to return. Range is about 2 meters.
+The REV 2m Distance Sensor is a time-of-flight sensor. It sends an infrared pulse and measures how long it takes to return. Range is about 2 meters. The SDK sample is `SensorREV2mDistance`.
 
-## Setup
+## Reading it
 
-Configure it as an I2C device. In code, use the `DistanceSensor` interface.
-
-```java
-import com.qualcomm.robotcore.hardware.DistanceSensor;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-
-DistanceSensor distanceSensor = hardwareMap.get(DistanceSensor.class, "distanceSensor");
-```
-
-## Reading
-
-Pass the unit you want to `getDistance()`.
+Configure it as a REV 2m Distance Sensor on an I2C port. The sample names it `sensor_distance`. Read it through the generic `DistanceSensor` interface, and cast to `Rev2mDistanceSensor` if you want the sensor-specific methods.
 
 ```java
-double inches = distanceSensor.getDistance(DistanceUnit.INCH);
-double cm = distanceSensor.getDistance(DistanceUnit.CM);
+@TeleOp(name = "Sensor: REV2mDistance", group = "Sensor")
+public class SensorREV2mDistance extends LinearOpMode {
 
-telemetry.addData("Distance (in)", "%.2f", inches);
-telemetry.update();
+    private DistanceSensor sensorDistance;
+
+    @Override
+    public void runOpMode() {
+        sensorDistance = hardwareMap.get(DistanceSensor.class, "sensor_distance");
+
+        // Cast it to reach the methods specific to this sensor.
+        Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor) sensorDistance;
+
+        telemetry.addData(">>", "Press start to continue");
+        telemetry.update();
+
+        waitForStart();
+        while (opModeIsActive()) {
+            telemetry.addData("deviceName", sensorDistance.getDeviceName() );
+            telemetry.addData("range", String.format("%.01f mm", sensorDistance.getDistance(DistanceUnit.MM)));
+            telemetry.addData("range", String.format("%.01f cm", sensorDistance.getDistance(DistanceUnit.CM)));
+            telemetry.addData("range", String.format("%.01f m", sensorDistance.getDistance(DistanceUnit.METER)));
+            telemetry.addData("range", String.format("%.01f in", sensorDistance.getDistance(DistanceUnit.INCH)));
+
+            telemetry.addData("ID", String.format("%x", sensorTimeOfFlight.getModelID()));
+            telemetry.addData("did time out", Boolean.toString(sensorTimeOfFlight.didTimeoutOccur()));
+
+            telemetry.update();
+        }
+    }
+}
 ```
 
-If nothing is in range the sensor returns a very large value, so check for that before using the number.
+`getDistance()` takes the unit you want. When nothing is in range it returns a very large value, so check for that before acting on the number. `didTimeoutOccur()` tells you the reading did not come back at all.
 
 ## Uses
 
 - **Intake detection.** Mount the sensor inside the intake and stop the intake motor when the reading drops below a threshold.
-- **Wall alignment.** Two sensors on the same side of the robot read the same distance when the robot is square to the wall.
+- **Wall alignment.** Two sensors on the same side read the same distance when the robot is square to the wall.
 - **Stopping before a wall.** Cut forward power when the reading is under a set distance.
 
 ## Example
@@ -50,34 +64,40 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-@TeleOp(name = "Distance Sensor Example")
+@TeleOp(name = "Distance Sensor Example", group = "Sensor")
 public class DistanceSensorExample extends LinearOpMode {
 
-    private DistanceSensor distanceSensor;
-    private DcMotor driveMotor;
+    private DistanceSensor sensorDistance;
+    private DcMotor leftDrive;
+    private DcMotor rightDrive;
 
     @Override
     public void runOpMode() {
-        distanceSensor = hardwareMap.get(DistanceSensor.class, "distanceSensor");
-        driveMotor = hardwareMap.get(DcMotor.class, "driveMotor");
+        sensorDistance = hardwareMap.get(DistanceSensor.class, "sensor_distance");
+        leftDrive  = hardwareMap.get(DcMotor.class, "left_drive");
+        rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
+
+        leftDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightDrive.setDirection(DcMotor.Direction.FORWARD);
 
         waitForStart();
 
         while (opModeIsActive()) {
-            double inches = distanceSensor.getDistance(DistanceUnit.INCH);
-            double drivePower = -gamepad1.left_stick_y;
+            double inches = sensorDistance.getDistance(DistanceUnit.INCH);
+            double drive = -gamepad1.left_stick_y;
 
-            if (inches < 5.0 && drivePower > 0) {
-                driveMotor.setPower(0);
-            } else {
-                driveMotor.setPower(drivePower);
+            if (inches < 5.0 && drive > 0) {
+                drive = 0;
             }
 
-            telemetry.addData("Distance", "%.2f in", inches);
+            leftDrive.setPower(drive);
+            rightDrive.setPower(drive);
+
+            telemetry.addData("range", "%.01f in", inches);
             telemetry.update();
         }
     }
@@ -86,5 +106,5 @@ public class DistanceSensorExample extends LinearOpMode {
 
 ## Notes
 
-- Dark and transparent surfaces can give bad readings. Test against the actual object you plan to detect.
+- Dark and transparent surfaces give bad readings. Test against the actual object you plan to detect.
 - Each read is an I2C transaction and takes time. Don't read the sensor more then once per loop.

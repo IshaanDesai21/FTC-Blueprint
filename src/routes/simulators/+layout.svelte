@@ -41,7 +41,7 @@
 			<p>This simulator needs a keyboard and a wide screen. Open it on a computer.</p>
 
 			<div class="buttons">
-				<a href="/software" class="btn-primary">Back to docs</a>
+				<a href="/" class="btn-primary">Back to docs</a>
 				<button class="btn-secondary" onclick={closeWarning}>Continue anyway</button>
 			</div>
 		</div>

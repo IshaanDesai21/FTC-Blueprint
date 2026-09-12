@@ -10,7 +10,6 @@ export async function GET() {
 	const pages = [
 		'',
 		'/complete-rookie-guide',
-		'/software',
 		'/review',
 		'/suggest',
 		'/simulators/pid',

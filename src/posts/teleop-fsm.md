@@ -86,7 +86,7 @@ public class FSMTeleOp extends LinearOpMode {
     enum ClawState { OPEN, CLOSED }
     enum SlideState { RETRACTED, LOW, HIGH }
 
-    DcMotor frontLeft, frontRight, backLeft, backRight;
+    DcMotor frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive;
     DcMotor slideMotor;
     Servo clawServo;
 
@@ -107,36 +107,52 @@ public class FSMTeleOp extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        frontLeft  = hardwareMap.get(DcMotor.class, "frontLeft");
-        frontRight = hardwareMap.get(DcMotor.class, "frontRight");
-        backLeft   = hardwareMap.get(DcMotor.class, "backLeft");
-        backRight  = hardwareMap.get(DcMotor.class, "backRight");
+        frontLeftDrive  = hardwareMap.get(DcMotor.class, "front_left_drive");
+        frontRightDrive = hardwareMap.get(DcMotor.class, "front_right_drive");
+        backLeftDrive   = hardwareMap.get(DcMotor.class, "back_left_drive");
+        backRightDrive  = hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        frontLeft.setDirection(DcMotor.Direction.REVERSE);
-        backLeft.setDirection(DcMotor.Direction.REVERSE);
+        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        slideMotor = hardwareMap.get(DcMotor.class, "slideMotor");
+        slideMotor = hardwareMap.get(DcMotor.class, "slide_motor");
         slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         slideMotor.setTargetPosition(SLIDE_RETRACTED);
         slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         slideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        clawServo = hardwareMap.get(Servo.class, "clawServo");
+        clawServo = hardwareMap.get(Servo.class, "claw_servo");
         clawServo.setPosition(CLAW_CLOSED);
 
         waitForStart();
 
         while (opModeIsActive()) {
-            double y  = -gamepad1.left_stick_y;
-            double x  =  gamepad1.left_stick_x;
-            double rx =  gamepad1.right_stick_x;
+            double axial   = -gamepad1.left_stick_y;
+            double lateral =  gamepad1.left_stick_x;
+            double yaw     =  gamepad1.right_stick_x;
 
-            double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
+            double frontLeftPower  = axial + lateral + yaw;
+            double frontRightPower = axial - lateral - yaw;
+            double backLeftPower   = axial - lateral + yaw;
+            double backRightPower  = axial + lateral - yaw;
 
-            frontLeft.setPower((y + x + rx) / denominator);
-            frontRight.setPower((y - x - rx) / denominator);
-            backLeft.setPower((y - x + rx) / denominator);
-            backRight.setPower((y + x - rx) / denominator);
+            double max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
+            max = Math.max(max, Math.abs(backLeftPower));
+            max = Math.max(max, Math.abs(backRightPower));
+
+            if (max > 1.0) {
+                frontLeftPower  /= max;
+                frontRightPower /= max;
+                backLeftPower   /= max;
+                backRightPower  /= max;
+            }
+
+            frontLeftDrive.setPower(frontLeftPower);
+            frontRightDrive.setPower(frontRightPower);
+            backLeftDrive.setPower(backLeftPower);
+            backRightDrive.setPower(backRightPower);
 
             boolean currA = gamepad2.a;
             if (currA && !prevA) {

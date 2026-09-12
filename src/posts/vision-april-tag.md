@@ -2,7 +2,7 @@
 title: AprilTag Detection
 panelCategory: "Vision"
 date: 2026-04-14
-description: Detecting AprilTags with VisionPortal and driving toward one.
+description: Detecting AprilTags with VisionPortal and driving to one.
 tags: [software, beginner, completed]
 author: Blueprint
 published: true
@@ -10,163 +10,137 @@ published: true
 
 AprilTags are square black and white markers placed on the field. The SDK detects them from a webcam and reports the distance and angle from the camera to each tag. Every tag has an ID, and the field tag positions are listed in the game manual.
 
+The samples are `ConceptAprilTag` for reading tags and `RobotAutoDriveToAprilTagOmni` for driving to one. The code here is from the second.
+
 ## Requirements
 
-- A USB webcam plugged into the Control Hub.
-- The webcam in the robot configuration. The default name is `Webcam 1`.
-- SDK 8.2 or newer, which has `VisionPortal` and `AprilTagProcessor`.
+- A USB webcam plugged into the Control Hub, named `Webcam 1` in the robot configuration.
+- An SDK version with `VisionPortal` and `AprilTagProcessor`.
 
-## Setup
-
-`AprilTagProcessor` does the detection. `VisionPortal` runs the camera and feeds it frames.
+## Setting up the processor
 
 ```java
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+private void initAprilTag() {
+    aprilTag = new AprilTagProcessor.Builder().build();
 
-AprilTagProcessor aprilTag = new AprilTagProcessor.Builder().build();
+    // Decimation trades detection range against frame rate.
+    // 1 detects a 2 inch tag from 10 feet at 10 fps.
+    // 2 detects a 2 inch tag from 6 feet at 22 fps.
+    // 3 detects a 2 inch tag from 4 feet at 30 fps.
+    aprilTag.setDecimation(2);
 
-VisionPortal visionPortal = new VisionPortal.Builder()
-    .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-    .addProcessor(aprilTag)
-    .build();
+    visionPortal = new VisionPortal.Builder()
+            .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+            .addProcessor(aprilTag)
+            .build();
+}
 ```
 
-Build this before `waitForStart()`. The defaults use the current season's tag library, so the range numbers are correct for the official tags.
+Decimation can be changed mid-match. Lower it when you need range, raise it when you need frame rate.
+
+The sample also sets a short manual exposure, around 6 ms at gain 250, to cut motion blur while the robot is moving. Tags are much harder to detect from a moving robot on the default auto exposure.
 
 ## Reading detections
 
 ```java
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-import java.util.List;
-
-List<AprilTagDetection> detections = aprilTag.getDetections();
-for (AprilTagDetection detection : detections) {
+List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+for (AprilTagDetection detection : currentDetections) {
     if (detection.metadata != null) {
-        telemetry.addData("ID", detection.id);
-        telemetry.addData("Range", "%.1f in", detection.ftcPose.range);
-        telemetry.addData("Bearing", "%.1f deg", detection.ftcPose.bearing);
-        telemetry.addData("Yaw", "%.1f deg", detection.ftcPose.yaw);
+        if ((DESIRED_TAG_ID < 0) || (detection.id == DESIRED_TAG_ID)) {
+            targetFound = true;
+            desiredTag = detection;
+            break;
+        }
+    } else {
+        // Not in the tag library, so there is no size information and no pose.
+        telemetry.addData("Unknown", "Tag ID %d is not in TagLibrary", detection.id);
     }
 }
 ```
 
-`metadata` is null for a tag that is not in the tag library. `ftcPose` is only filled in for known tags, so check `metadata` before reading it.
+`metadata` is null for a tag that is not in the library. `ftcPose` is only filled in for known tags, so check `metadata` before reading it. Setting the desired ID to -1 accepts any tag.
 
 ## Pose fields
 
 - **`range`**: straight-line distance from the camera to the tag, in inches.
-- **`bearing`**: angle the camera would have to turn to point at the tag, in degrees. Positive means the tag is to the left.
-- **`yaw`**: how much the tag is rotated relative to the camera. Zero means you are looking at it straight on.
+- **`bearing`**: angle the camera would turn to point at the tag, in degrees.
+- **`yaw`**: how much the tag is rotated relative to the camera, which tells you how far off to the side of the tag you are.
 
-`range` and `bearing` are enough to drive to a tag.
+The driving sample uses all three: range to set forward speed, bearing to turn, and yaw to strafe.
 
-## Example: drive to a tag
-
-Proportional control on range and bearing. The robot drives until it is 12 inches from tag 3 and pointed at it.
+## Driving to a tag
 
 ```java
-package org.firstinspires.ftc.teamcode;
+final double DESIRED_DISTANCE = 12.0;
 
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-import java.util.List;
+// Drive = Error * Gain. Smaller gains are smoother, larger are more aggressive.
+final double SPEED_GAIN  =  0.02  ;
+final double STRAFE_GAIN =  0.015 ;
+final double TURN_GAIN   =  0.01  ;
 
-@Autonomous(name = "Drive To AprilTag")
-public class DriveToAprilTag extends LinearOpMode {
+final double MAX_AUTO_SPEED = 0.5;
+final double MAX_AUTO_STRAFE= 0.5;
+final double MAX_AUTO_TURN  = 0.3;
+```
 
-    static final int TARGET_TAG_ID = 3;
-    static final double DESIRED_RANGE = 12.0;
-    static final double RANGE_GAIN = 0.02;
-    static final double TURN_GAIN = 0.01;
-    static final double MAX_DRIVE = 0.4;
-    static final double MAX_TURN = 0.3;
+```java
+if (gamepad1.left_bumper && targetFound) {
 
-    @Override
-    public void runOpMode() {
-        DcMotor frontLeft  = hardwareMap.get(DcMotor.class, "frontLeft");
-        DcMotor frontRight = hardwareMap.get(DcMotor.class, "frontRight");
-        DcMotor backLeft   = hardwareMap.get(DcMotor.class, "backLeft");
-        DcMotor backRight  = hardwareMap.get(DcMotor.class, "backRight");
+    double rangeError   = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
+    double headingError = desiredTag.ftcPose.bearing;
+    double yawError     = desiredTag.ftcPose.yaw;
 
-        frontLeft.setDirection(DcMotor.Direction.REVERSE);
-        backLeft.setDirection(DcMotor.Direction.REVERSE);
+    drive  = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
+    turn   = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
+    strafe = Range.clip(-yawError * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
 
-        AprilTagProcessor aprilTag = new AprilTagProcessor.Builder().build();
-        VisionPortal visionPortal = new VisionPortal.Builder()
-            .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-            .addProcessor(aprilTag)
-            .build();
+} else {
 
-        waitForStart();
+    // Manual driving, slowed down to stay controllable.
+    drive  = -gamepad1.left_stick_y  / 2.0;
+    strafe = -gamepad1.left_stick_x  / 2.0;
+    turn   = -gamepad1.right_stick_x / 3.0;
+}
 
-        ElapsedTime timeout = new ElapsedTime();
+moveRobot(drive, strafe, turn);
+sleep(10);
+```
 
-        while (opModeIsActive() && timeout.seconds() < 10) {
-            AprilTagDetection target = null;
+Each output is the error multiplied by a gain and then clipped. That is proportional control. Bigger error means more power, and the clip stops the robot lunging when a tag first appears far away.
 
-            List<AprilTagDetection> detections = aprilTag.getDetections();
-            for (AprilTagDetection d : detections) {
-                if (d.metadata != null && d.id == TARGET_TAG_ID) {
-                    target = d;
-                    break;
-                }
-            }
+Holding the bumper for automatic approach, rather than running it unconditionally, means the driver can line the robot up manually first and stays in control.
 
-            double drive = 0;
-            double rotate = 0;
+## Moving the robot
 
-            if (target != null) {
-                double rangeError = target.ftcPose.range - DESIRED_RANGE;
-                double bearing = target.ftcPose.bearing;
+```java
+public void moveRobot(double x, double y, double yaw) {
+    double frontLeftPower    =  x - y - yaw;
+    double frontRightPower   =  x + y + yaw;
+    double backLeftPower     =  x + y - yaw;
+    double backRightPower    =  x - y + yaw;
 
-                if (Math.abs(rangeError) < 1.0 && Math.abs(bearing) < 2.0) {
-                    break;
-                }
+    double max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
+    max = Math.max(max, Math.abs(backLeftPower));
+    max = Math.max(max, Math.abs(backRightPower));
 
-                drive = Range.clip(rangeError * RANGE_GAIN, -MAX_DRIVE, MAX_DRIVE);
-                rotate = Range.clip(-bearing * TURN_GAIN, -MAX_TURN, MAX_TURN);
-
-                telemetry.addData("Range", "%.1f", target.ftcPose.range);
-                telemetry.addData("Bearing", "%.1f", bearing);
-            } else {
-                telemetry.addLine("Tag not visible");
-            }
-
-            frontLeft.setPower(drive + rotate);
-            frontRight.setPower(drive - rotate);
-            backLeft.setPower(drive + rotate);
-            backRight.setPower(drive - rotate);
-
-            telemetry.update();
-        }
-
-        frontLeft.setPower(0);
-        frontRight.setPower(0);
-        backLeft.setPower(0);
-        backRight.setPower(0);
-
-        visionPortal.close();
+    if (max > 1.0) {
+        frontLeftPower /= max;
+        frontRightPower /= max;
+        backLeftPower /= max;
+        backRightPower /= max;
     }
+
+    frontLeftDrive.setPower(frontLeftPower);
+    frontRightDrive.setPower(frontRightPower);
+    backLeftDrive.setPower(backLeftPower);
+    backRightDrive.setPower(backRightPower);
 }
 ```
 
-`rotate` is negated because a positive bearing means the tag is to the left and the robot has to turn counter-clockwise, which is a negative `rx` in the mecanum convention used on this site. If the robot turns away from the tag, flip the sign.
-
-The loop exits when the robot is on target, when the timeout runs out, or when Stop is pressed. If the tag is not visible the robot stops and waits.
+In this method positive x is forward, positive y is strafe left, and positive yaw is counter-clockwise. Those signs differ from `BasicOmniOpMode_Linear`, so do not mix the two formulas in one file.
 
 ## Notes
 
-- Call `visionPortal.close()` when done so the camera is released.
-- While the OpMode is in init, the Driver Station menu has a Camera Stream option that shows the camera view. Use it to check that tags are in frame.
+- During init the Driver Station menu has a Camera Stream option. Use it to check tags are in frame.
 - Detection depends on lighting. Test under lighting close to the competition venue.
-- Higher camera resolution gives better range at the cost of frame rate. Set it with `.setCameraResolution(new Size(640, 480))` on the portal builder if you need to change it.
 - Always check `metadata != null` before reading `ftcPose`. Its the most common null pointer crash in vision code.

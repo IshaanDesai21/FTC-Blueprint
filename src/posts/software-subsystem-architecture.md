@@ -19,7 +19,7 @@ public class Intake {
     private DcMotor motor;
 
     public Intake(HardwareMap hardwareMap) {
-        motor = hardwareMap.get(DcMotor.class, "intakeMotor");
+        motor = hardwareMap.get(DcMotor.class, "intake_motor");
     }
 
     public void intake() {
@@ -85,7 +85,7 @@ public class Lift {
     private int target = 0;
 
     public Lift(HardwareMap hardwareMap) {
-        motor = hardwareMap.get(DcMotor.class, "liftMotor");
+        motor = hardwareMap.get(DcMotor.class, "lift_motor");
     }
 
     public void moveToPosition(Position p) {

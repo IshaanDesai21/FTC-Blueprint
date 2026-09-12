@@ -1,21 +1,21 @@
 @import './prism.css';
 
 :root {
-	--bg: #ffffff;
-	--bg-secondary: #f6f7f8;
-	--bg-card: #ffffff;
-	--bg-card-hover: #f0f1f3;
-	--bg-header: rgba(255, 255, 255, 0.95);
-	--border: #e4e6ea;
-	--border-subtle: #eef0f2;
+	--bg: #f8f8f5;
+	--bg-secondary: #efeeea;
+	--bg-card: #fdfdfb;
+	--bg-card-hover: #e9e8e3;
+	--bg-header: rgba(248, 248, 245, 0.96);
+	--border: #dcdad2;
+	--border-subtle: #e8e6df;
 
-	--bg-code: #f6f7f8;
-	--sidebar-bg: #eef5fc;
+	--bg-code: #f2f1ec;
+	--sidebar-bg: #e9eef4;
 
-	--text-primary: #17181b;
-	--text-secondary: #5a5f66;
-	--text-muted: #8b9099;
-	--text-body: #2c2f34;
+	--text-primary: #1b1c1a;
+	--text-secondary: #56584f;
+	--text-muted: #86887e;
+	--text-body: #2f312c;
 
 	--accent-cyan: #2b7cb0;
 	--accent-green: #3a8a5a;

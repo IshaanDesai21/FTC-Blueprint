@@ -142,89 +142,112 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-@TeleOp(name = "Drive TeleOp")
+@TeleOp(name="Drive TeleOp", group="Linear OpMode")
 public class DriveTeleOp extends LinearOpMode {
 
-    DcMotor frontLeft, frontRight, backLeft, backRight;
+    private DcMotor frontLeftDrive = null;
+    private DcMotor backLeftDrive = null;
+    private DcMotor frontRightDrive = null;
+    private DcMotor backRightDrive = null;
 
     @Override
     public void runOpMode() {
-        frontLeft  = hardwareMap.get(DcMotor.class, "frontLeft");
-        frontRight = hardwareMap.get(DcMotor.class, "frontRight");
-        backLeft   = hardwareMap.get(DcMotor.class, "backLeft");
-        backRight  = hardwareMap.get(DcMotor.class, "backRight");
+        frontLeftDrive  = hardwareMap.get(DcMotor.class, "front_left_drive");
+        backLeftDrive   = hardwareMap.get(DcMotor.class, "back_left_drive");
+        frontRightDrive = hardwareMap.get(DcMotor.class, "front_right_drive");
+        backRightDrive  = hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        frontLeft.setDirection(DcMotor.Direction.REVERSE);
-        backLeft.setDirection(DcMotor.Direction.REVERSE);
+        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
+
+        telemetry.addData("Status", "Initialized");
+        telemetry.update();
 
         waitForStart();
 
         while (opModeIsActive()) {
-            double y  = -gamepad1.left_stick_y;
-            double x  =  gamepad1.left_stick_x;
-            double rx =  gamepad1.right_stick_x;
+            double max;
 
-            double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
+            double axial   = -gamepad1.left_stick_y;
+            double lateral =  gamepad1.left_stick_x;
+            double yaw     =  gamepad1.right_stick_x;
 
-            frontLeft.setPower((y + x + rx) / denominator);
-            frontRight.setPower((y - x - rx) / denominator);
-            backLeft.setPower((y - x + rx) / denominator);
-            backRight.setPower((y + x - rx) / denominator);
+            double frontLeftPower  = axial + lateral + yaw;
+            double frontRightPower = axial - lateral - yaw;
+            double backLeftPower   = axial - lateral + yaw;
+            double backRightPower  = axial + lateral - yaw;
 
-            telemetry.addData("Forward", y);
-            telemetry.addData("Strafe", x);
-            telemetry.addData("Rotate", rx);
+            max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
+            max = Math.max(max, Math.abs(backLeftPower));
+            max = Math.max(max, Math.abs(backRightPower));
+
+            if (max > 1.0) {
+                frontLeftPower  /= max;
+                frontRightPower /= max;
+                backLeftPower   /= max;
+                backRightPower  /= max;
+            }
+
+            frontLeftDrive.setPower(frontLeftPower);
+            frontRightDrive.setPower(frontRightPower);
+            backLeftDrive.setPower(backLeftPower);
+            backRightDrive.setPower(backRightPower);
+
+            telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
+            telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
             telemetry.update();
         }
     }
 }
 ```
 
-[Teleop Introduction](/software/teleop-introduction) and [Teleop Beginner](/software/teleop-beginner) explain each part.
+This is the SDK sample `BasicOmniOpMode_Linear`. [Teleop Introduction](/software/teleop-introduction) and [Teleop Beginner](/software/teleop-beginner) explain each part.
 
 ## 11. First autonomous
 
 Autonomous is the first 30 seconds. Even driving to a scoring position and parking is worth points. The simplest reliable method is driving by encoder counts.
 
 ```java
-static final double TICKS_PER_INCH = 45.0;
+static final double COUNTS_PER_MOTOR_REV  = 537.7 ;   // goBILDA 5202 312 RPM
+static final double DRIVE_GEAR_REDUCTION  = 1.0 ;
+static final double WHEEL_DIAMETER_INCHES = 3.78 ;
+static final double COUNTS_PER_INCH       = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+                                            (WHEEL_DIAMETER_INCHES * 3.1415);
 
-public void driveForward(double inches, double power) {
-    int ticks = (int) (inches * TICKS_PER_INCH);
+public void driveForward(double inches, double speed, double timeoutS) {
+    if (opModeIsActive()) {
 
-    frontLeft.setTargetPosition(frontLeft.getCurrentPosition() + ticks);
-    frontRight.setTargetPosition(frontRight.getCurrentPosition() + ticks);
-    backLeft.setTargetPosition(backLeft.getCurrentPosition() + ticks);
-    backRight.setTargetPosition(backRight.getCurrentPosition() + ticks);
+        frontLeftDrive.setTargetPosition(frontLeftDrive.getCurrentPosition()   + (int)(inches * COUNTS_PER_INCH));
+        frontRightDrive.setTargetPosition(frontRightDrive.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH));
+        backLeftDrive.setTargetPosition(backLeftDrive.getCurrentPosition()     + (int)(inches * COUNTS_PER_INCH));
+        backRightDrive.setTargetPosition(backRightDrive.getCurrentPosition()   + (int)(inches * COUNTS_PER_INCH));
 
-    frontLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    frontRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    backLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    backRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        setAllRunMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-    frontLeft.setPower(power);
-    frontRight.setPower(power);
-    backLeft.setPower(power);
-    backRight.setPower(power);
+        runtime.reset();
+        setAllPower(Math.abs(speed));
 
-    while (opModeIsActive() && frontLeft.isBusy() && frontRight.isBusy()) {
-        telemetry.addData("Driving", "%.0f in", inches);
-        telemetry.update();
+        while (opModeIsActive() &&
+               (runtime.seconds() < timeoutS) &&
+               (frontLeftDrive.isBusy() && frontRightDrive.isBusy())) {
+            telemetry.addData("Driving", "%.0f in", inches);
+            telemetry.update();
+        }
+
+        setAllPower(0);
+        setAllRunMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
-
-    frontLeft.setPower(0);
-    frontRight.setPower(0);
-    backLeft.setPower(0);
-    backRight.setPower(0);
 }
 ```
 
 ```java
 waitForStart();
-driveForward(24, 0.5);
+driveForward(24, 0.5, 5.0);
 ```
 
-Reset the encoders at init with `STOP_AND_RESET_ENCODER` first. `TICKS_PER_INCH` is about 45 for a 312 RPM goBILDA motor on a 96 mm wheel. Measure it on your robot. Full details in [Encoder Autonomous Introduction](/software/encoder-autonomous-introduction).
+Reset the encoders at init with `STOP_AND_RESET_ENCODER` first. The timeout stops a stalled motor from holding up the rest of the routine. Measure the counts per inch on your own robot. Full details in [Encoder Autonomous Introduction](/software/encoder-autonomous-introduction).
 
 ## 12. Engineering portfolio
 

@@ -129,14 +129,14 @@ public class FullAutoWithSubsystems extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        frontLeft  = hardwareMap.get(DcMotor.class, "frontLeft");
-        frontRight = hardwareMap.get(DcMotor.class, "frontRight");
-        backLeft   = hardwareMap.get(DcMotor.class, "backLeft");
-        backRight  = hardwareMap.get(DcMotor.class, "backRight");
+        frontLeft  = hardwareMap.get(DcMotor.class, "front_left_drive");
+        frontRight = hardwareMap.get(DcMotor.class, "front_right_drive");
+        backLeft   = hardwareMap.get(DcMotor.class, "back_left_drive");
+        backRight  = hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        armMotor   = hardwareMap.get(DcMotor.class, "armMotor");
-        slideMotor = hardwareMap.get(DcMotor.class, "slideMotor");
-        clawServo  = hardwareMap.get(Servo.class, "clawServo");
+        armMotor   = hardwareMap.get(DcMotor.class, "arm_motor");
+        slideMotor = hardwareMap.get(DcMotor.class, "slide_motor");
+        clawServo  = hardwareMap.get(Servo.class, "claw_servo");
 
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         backLeft.setDirection(DcMotor.Direction.REVERSE);

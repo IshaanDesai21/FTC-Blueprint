@@ -22,7 +22,7 @@
 <div class="doc-layout">
 	<article class="doc-main">
 		<nav class="breadcrumbs" aria-label="Breadcrumb">
-			<a href="/software">Docs</a>
+			<a href="/">Docs</a>
 			<span class="sep">/</span>
 			<span>Rookie Guide</span>
 		</nav>

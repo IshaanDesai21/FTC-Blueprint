@@ -80,27 +80,27 @@
 	type NavLink = {
 		label: string;
 		href?: string;
-		match?: string;
+		matches?: string[];
 		devOnly?: boolean;
 		children?: NavLink[];
 	};
 
 	const navLinks: NavLink[] = [
-		{ href: '/software', label: 'Software', match: '/software' },
+		{ href: '/', label: 'Software', matches: ['/', '/software'] },
 		{
 			label: 'Simulators',
-			match: '/simulators',
+			matches: ['/simulators'],
 			children: [
 				{ href: '/simulators/pid', label: 'PID Simulator' },
 				{ href: '/simulators/mecanum', label: 'Mecanum Simulator' },
 				{ href: '/simulators/model-converter', label: 'Model Converter', devOnly: true }
 			]
 		},
-		{ href: '/complete-rookie-guide', label: 'Rookie Guide', match: '/complete-rookie-guide' },
-		{ href: '/review', label: 'Get a Free Review', match: '/review' },
-		{ href: '/suggest', label: 'Suggest', match: '/suggest' },
-		{ href: '/editor', label: 'Editor', match: '/editor', devOnly: true },
-		{ href: '/software/markdown-reference', label: 'Markdown Reference', match: '/software/markdown-reference', devOnly: true }
+		{ href: '/complete-rookie-guide', label: 'Rookie Guide', matches: ['/complete-rookie-guide'] },
+		{ href: '/review', label: 'Get a Free Review', matches: ['/review'] },
+		{ href: '/suggest', label: 'Suggest', matches: ['/suggest'] },
+		{ href: '/editor', label: 'Editor', matches: ['/editor'], devOnly: true },
+		{ href: '/software/markdown-reference', label: 'Markdown Reference', matches: ['/software/markdown-reference'], devOnly: true }
 	];
 
 	const visibleNavLinks = $derived(
@@ -149,10 +149,10 @@
 		}
 	}
 
-	const isActive = (match?: string) => {
-		if (!match) return false;
+	const isActive = (matches?: string[]) => {
+		if (!matches) return false;
 		const p = $page.url.pathname;
-		return p === match || p.startsWith(`${match}/`);
+		return matches.some((m) => (m === '/' ? p === '/' : p === m || p.startsWith(`${m}/`)));
 	};
 </script>
 
@@ -178,7 +178,7 @@
 						<button
 							type="button"
 							class="nav-link dropdown-toggle"
-							class:active={isActive(item.match)}
+							class:active={isActive(item.matches)}
 							aria-expanded={dropdownOpen}
 							aria-haspopup="true"
 							onclick={() => (dropdownOpen = !dropdownOpen)}
@@ -205,8 +205,8 @@
 					<a
 						href={item.href}
 						class="nav-link"
-						class:active={isActive(item.match)}
-						aria-current={isActive(item.match) ? 'page' : undefined}
+						class:active={isActive(item.matches)}
+						aria-current={isActive(item.matches) ? 'page' : undefined}
 						onclick={closeMenu}
 					>
 						{item.label}

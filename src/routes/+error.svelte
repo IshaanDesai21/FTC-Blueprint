@@ -16,7 +16,7 @@
 
 			<div class="actions">
 				<a href="/" class="btn-primary">Return Home</a>
-				<a href="/software" class="btn-secondary">Browse Software</a>
+				<a href="/" class="btn-secondary">Browse Software</a>
 			</div>
 		</div>
 	</div>

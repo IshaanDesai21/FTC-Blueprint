@@ -43,27 +43,34 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "My TeleOp")
+@TeleOp(name="My TeleOp", group="Linear OpMode")
 public class MyTeleOp extends LinearOpMode {
+
+    private ElapsedTime runtime = new ElapsedTime();
 
     @Override
     public void runOpMode() {
-        // get hardware from hardwareMap here
+        // Get hardware from hardwareMap here.
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
         waitForStart();
+        runtime.reset();
 
         while (opModeIsActive()) {
-            // read gamepads, set motor and servo outputs
+            // Read gamepads, set motor and servo outputs.
 
+            telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.update();
         }
     }
 }
 ```
+
+This is the skeleton every SDK sample uses. `ElapsedTime` is how the samples show match time and how you measure timeouts.
 
 Three parts:
 
@@ -71,7 +78,7 @@ Three parts:
 2. **`waitForStart()`.** Blocks until the driver presses Start.
 3. **`while (opModeIsActive())`.** The main loop. Runs until Stop is pressed or the match timer ends. All driving code goes here.
 
-Add `@TeleOp` so the OpMode shows up under the TeleOp list on the Driver Station. Autonomous OpModes use `@Autonomous`.
+Add `@TeleOp` so the OpMode shows up under the TeleOp list on the Driver Station. Autonomous OpModes use `@Autonomous`. The SDK samples also carry `@Disabled`, which keeps them off the Driver Station list. Delete that line when you copy a sample into `TeamCode`.
 
 ## Telemetry
 

@@ -152,7 +152,7 @@
 					<div style="display:flex; justify-content:center; gap:1rem;">
 						<a href="/suggest" class="btn">Suggest a Guide</a>
 						<a
-							href="/software"
+							href="/"
 							class="btn btn-ghost"
 							style="background:transparent; border:1px solid var(--border); color:var(--text-secondary);"
 							>Browse Guides</a

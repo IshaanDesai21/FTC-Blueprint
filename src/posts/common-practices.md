@@ -18,7 +18,7 @@ OpModes live in `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/`. Put au
 - Classes: `PascalCase` (`MecanumDrive`, `TeleOpMain`)
 - Constants: `UPPER_SNAKE_CASE` (`MAX_DRIVE_SPEED`, `CLAW_OPEN_POSITION`)
 
-Name motors by what they do. `frontLeft` is useful. `motor0` is not.
+Name motors by what they do. The SDK samples use names like `front_left_drive` and `left_arm` in the robot configuration, and matching camelCase variables in code. `motor0` tells you nothing.
 
 ## Initialize hardware in one place
 
@@ -27,10 +27,10 @@ Put all `hardwareMap.get()` calls at the top of `runOpMode()`, before `waitForSt
 ```java
 @Override
 public void runOpMode() {
-    DcMotor frontLeft  = hardwareMap.get(DcMotor.class, "frontLeft");
-    DcMotor frontRight = hardwareMap.get(DcMotor.class, "frontRight");
-    DcMotor backLeft   = hardwareMap.get(DcMotor.class, "backLeft");
-    DcMotor backRight  = hardwareMap.get(DcMotor.class, "backRight");
+    DcMotor frontLeft  = hardwareMap.get(DcMotor.class, "front_left_drive");
+    DcMotor frontRight = hardwareMap.get(DcMotor.class, "front_right_drive");
+    DcMotor backLeft   = hardwareMap.get(DcMotor.class, "back_left_drive");
+    DcMotor backRight  = hardwareMap.get(DcMotor.class, "back_right_drive");
     Servo claw = hardwareMap.get(Servo.class, "claw");
 
     frontLeft.setDirection(DcMotor.Direction.REVERSE);

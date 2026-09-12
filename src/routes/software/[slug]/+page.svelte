@@ -25,7 +25,7 @@
 	<div class="doc-content">
 	<article class="doc-main">
 		<nav class="breadcrumbs" aria-label="Breadcrumb">
-			<a href="/software">Software</a>
+			<a href="/">Software</a>
 			{#if data.meta.panelCategory}
 				<span class="sep">/</span>
 				<span>{data.meta.panelCategory}</span>
@@ -44,7 +44,7 @@
 		</div>
 
 		<footer class="doc-footer">
-			<a href="/software" class="back-link">← Back to Software</a>
+			<a href="/" class="back-link">← Back to Software</a>
 		</footer>
 	</article>
 
