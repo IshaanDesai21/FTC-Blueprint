@@ -35,7 +35,7 @@ You can deploy over USB or over Wi-Fi.
 For Wi-Fi, connect your computer to the Control Hub's Wi-Fi network, then run this in the Android Studio terminal:
 
 ```bash
-adb connect 192.168.43.1:5555
+adb connect 192.168.43.1
 ```
 
 The hub should then show up as a run target. Press Run to build and install the app.
