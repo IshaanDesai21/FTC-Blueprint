@@ -2,15 +2,11 @@
 title: Getting Started
 panelCategory: "Basics"
 date: 2026-05-15
-description: What FTC is and what you need before writing code.
+description: The control system, the ways to program it, and where to start.
 tags: [completed, software, rookie guide, beginner]
 author: Blueprint
 published: true
 ---
-
-## What FTC is
-
-FIRST Tech Challenge is a robotics competition for students in grades 7 through 12. Each season has a new game. Teams build and program a robot to play it, and compete in alliances of two teams against another alliance.
 
 ## The control system
 
@@ -30,7 +26,7 @@ This site covers Android Studio. It is the option that works with libraries like
 
 ## Things to read
 
-- The **Game Manual** for the current season. It defines what the robot can and cannot do. Read it before you build anything.
+- The **Competition Manual** for the current season, on [ftc-resources.firstinspires.org](https://ftc-resources.firstinspires.org/ftc/game). It sets rules as to what the robot can and cannot do. Read it before you build anything.
 - The [FtcRobotController](https://github.com/FIRST-Tech-Challenge/FtcRobotController) repository, which has the SDK and sample OpModes in the `FtcRobotController/src/main/java/org/firstinspires/ftc/robotcontroller/external/samples` folder.
 
 ## Where to start

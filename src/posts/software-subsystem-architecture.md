@@ -8,8 +8,6 @@ author: Blueprint
 published: true
 ---
 
-A single OpMode that controls every motor and servo directly works for a robot with two mechanisms. It stops working well once there are five, and once the same mechanism logic has to exist in both TeleOp and autonomous.
-
 ## What a subsystem is
 
 A subsystem is a class for one mechanism. It owns the motors, servos, and sensors for that mechanism, and the methods that move it.

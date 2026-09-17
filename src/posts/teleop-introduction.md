@@ -10,7 +10,7 @@ published: true
 
 ## The TeleOp period
 
-An FTC match has a 30 second autonomous period followed by a 2 minute driver-controlled period. The last 30 seconds of the driver-controlled period is the end game. TeleOp is the OpMode that runs during the driver-controlled period.
+An FTC match has a 30 second autonomous period, an 8 second transition, and a 2 minute driver-controlled period. TeleOp is the OpMode that runs during the driver-controlled period.
 
 The OpMode loops continuously, reading the gamepads and updating motors and servos each pass.
 

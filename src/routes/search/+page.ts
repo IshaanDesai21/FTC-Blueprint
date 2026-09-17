@@ -1,6 +1,9 @@
+import type { SearchDoc } from '../search-index.json/+server';
+
 export const prerender = false;
 
-export async function load({ parent }) {
-	const { allPosts } = await parent();
-	return { posts: allPosts };
+export async function load({ fetch }) {
+	const res = await fetch('/search-index.json');
+	const docs: SearchDoc[] = res.ok ? await res.json() : [];
+	return { docs };
 }

@@ -24,37 +24,50 @@ An arm or slide under gravity sags below its target with PID alone, until the in
 
 **Acceleration (kA).** Power per unit of acceleration. Most FTC mechanisms do not need it.
 
-## Implementation
+## In code
+
+The SDK has no feedforward class. The terms are a few lines of math added to the power you send the motor.
 
 ```java
-public class SlideFeedforward {
-    private double kS, kG, kV, kA;
-
-    public SlideFeedforward(double kS, double kG, double kV, double kA) {
-        this.kS = kS;
-        this.kG = kG;
-        this.kV = kV;
-        this.kA = kA;
-    }
-
-    public double calculate(double velocity, double acceleration) {
-        return kS * Math.signum(velocity) + kG + kV * velocity + kA * acceleration;
-    }
-}
+static final double kS = 0.0;
+static final double kG = 0.1;
+static final double kV = 0.0;
 ```
 
-For an arm, replace `kG` with `kG * Math.cos(angleRadians)`.
+For a linear slide holding or moving at a target velocity:
+
+```java
+double feedforward = kG + kS * Math.signum(targetVelocity) + kV * targetVelocity;
+```
+
+For an arm, gravity depends on the angle, so scale `kG` by the cosine of the angle from horizontal:
+
+```java
+static final double TICKS_PER_DEGREE = 537.7 * 5.0 / 360.0;   // motor ticks per rev * gear reduction / 360
+static final int    HORIZONTAL_TICKS = 300;                   // encoder reading with the arm level
+
+double angle = Math.toRadians((arm.getCurrentPosition() - HORIZONTAL_TICKS) / TICKS_PER_DEGREE);
+double feedforward = kG * Math.cos(angle);
+```
+
+Measure `HORIZONTAL_TICKS` by holding the arm level and reading the encoder on telemetry. Change the gear reduction to match your arm.
 
 ## Combining with PID
 
-```java
-double ff = feedforward.calculate(targetVelocity, targetAccel);
-double fb = pid.calculate(currentPosition);
+Add the feedforward to the output of the PID loop from [PID Control](/software/pid-control).
 
-motor.setPower(ff + fb);
+```java
+double position = arm.getCurrentPosition();
+double error = target - position;
+
+double pid = kP * error + kI * integralSum + kD * derivative;
+double angle = Math.toRadians((position - HORIZONTAL_TICKS) / TICKS_PER_DEGREE);
+double feedforward = kG * Math.cos(angle);
+
+arm.setPower(Range.clip(pid + feedforward, -1.0, 1.0));
 ```
 
-If you only want to hold position, pass zero velocity and acceleration. The feedforward then reduces to `kG`.
+If you only want to hold position, the target velocity is zero and the feedforward reduces to the gravity term.
 
 ## Tuning
 

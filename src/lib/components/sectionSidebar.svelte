@@ -1,17 +1,24 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { onMount } from 'svelte';
+	import { afterNavigate } from '$app/navigation';
+	import { onDestroy, tick } from 'svelte';
 
 	let { contentSelector = '.prose' }: { contentSelector?: string } = $props();
 
 	type HeadingEntry = {
 		id: string;
 		text: string;
-		level: number; // 1 to 4
+		level: number;
 	};
 
 	let headings: HeadingEntry[] = $state([]);
 	let activeId: string = $state('');
+
+	// While a click-triggered smooth scroll is running, keep the clicked heading active
+	// instead of stepping through every heading the page scrolls past.
+	let lockedUntilScrollEnds = false;
+	let scrollEndTimer: ReturnType<typeof setTimeout> | undefined;
+	let frame = 0;
 
 	function slugify(text: string, index: number): string {
 		const base = text
@@ -24,14 +31,15 @@
 	}
 
 	function buildHeadings() {
-		if (!browser) return;
-
 		const container = document.querySelector(contentSelector);
-		if (!container) return;
+		if (!container) {
+			headings = [];
+			return;
+		}
 
-		const els = container.querySelectorAll('h1, h2, h3, h4');
+		// Only the article's own headings, not ones inside embedded widgets like the PID tuner.
+		const els = [...container.querySelectorAll('h1, h2, h3, h4')].filter((el) => el.parentElement === container);
 		const seen: Record<string, number> = {};
-
 		const entries: HeadingEntry[] = [];
 
 		els.forEach((el, i) => {
@@ -47,53 +55,96 @@
 			}
 
 			el.id = slug;
-
 			entries.push({ id: slug, text, level });
 		});
 
 		headings = entries;
 	}
 
-	function scrollTo(id: string) {
-		const el = document.getElementById(id);
-		if (el) {
-			el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-		}
+	function headerOffset(): number {
+		const value = getComputedStyle(document.documentElement).getPropertyValue('--header-height');
+		return (parseFloat(value) || 56) + 24;
 	}
 
-	function setupScrollSpy() {
-		if (!browser) return;
+	function updateActive() {
+		if (lockedUntilScrollEnds || headings.length === 0) return;
 
-		const observer = new IntersectionObserver(
-			(entries) => {
-				for (const entry of entries) {
-					if (entry.isIntersecting) {
-						activeId = entry.target.id;
-					}
-				}
-			},
-			{
-				rootMargin: '-20% 0px -70% 0px',
-				threshold: 0
-			}
-		);
+		const atBottom =
+			window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+		if (atBottom) {
+			activeId = headings[headings.length - 1].id;
+			return;
+		}
 
-		headings.forEach(({ id }) => {
+		const offset = headerOffset();
+		let current = headings[0].id;
+		for (const { id } of headings) {
 			const el = document.getElementById(id);
-			if (el) observer.observe(el);
-		});
+			if (el && el.getBoundingClientRect().top - offset <= 1) {
+				current = id;
+			} else {
+				break;
+			}
+		}
+		activeId = current;
+	}
 
-		return () => observer.disconnect();
+	function onScroll() {
+		if (lockedUntilScrollEnds) {
+			clearTimeout(scrollEndTimer);
+			scrollEndTimer = setTimeout(() => {
+				lockedUntilScrollEnds = false;
+			}, 150);
+			return;
+		}
+		cancelAnimationFrame(frame);
+		frame = requestAnimationFrame(updateActive);
+	}
+
+	function goTo(id: string) {
+		const el = document.getElementById(id);
+		if (!el) return;
+
+		activeId = id;
+		lockedUntilScrollEnds = true;
+		clearTimeout(scrollEndTimer);
+		scrollEndTimer = setTimeout(() => {
+			lockedUntilScrollEnds = false;
+		}, 1000);
+
+		el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		history.replaceState(history.state, '', `#${id}`);
 	}
 
 	function indentPx(level: number): string {
-		return `${(level - 1) * 14}px`;
+		return `${Math.max(0, level - 2) * 12}px`;
 	}
 
-	onMount(() => {
+	// SvelteKit reuses this component when moving between articles, so onMount alone
+	// would leave the previous article's headings in place. Rebuild after every navigation.
+	afterNavigate(async () => {
+		headings = [];
+		activeId = '';
+		lockedUntilScrollEnds = false;
+		await tick();
 		buildHeadings();
-		const cleanup = setupScrollSpy();
-		return cleanup;
+		updateActive();
+	});
+
+	$effect(() => {
+		if (!browser) return;
+		window.addEventListener('scroll', onScroll, { passive: true });
+		window.addEventListener('resize', onScroll, { passive: true });
+		return () => {
+			window.removeEventListener('scroll', onScroll);
+			window.removeEventListener('resize', onScroll);
+		};
+	});
+
+	onDestroy(() => {
+		if (!browser) return;
+		cancelAnimationFrame(frame);
+		clearTimeout(scrollEndTimer);
 	});
 </script>
 
@@ -101,16 +152,17 @@
 	<nav class="section-sidebar" aria-label="Table of contents">
 		<p class="sidebar-label">On this page</p>
 		<ul class="sidebar-list">
-			{#each headings as { id, text, level }}
-				<li class="sidebar-item" style="padding-left: {indentPx(level)}">
+			{#each headings as { id, text, level } (id)}
+				<li style="padding-left: {indentPx(level)}">
 					<a
 						href="#{id}"
-						class="sidebar-link level-{level}"
+						class="sidebar-link"
+						class:sub={level > 2}
 						class:active={activeId === id}
+						aria-current={activeId === id ? 'location' : undefined}
 						onclick={(e) => {
 							e.preventDefault();
-							scrollTo(id);
-							activeId = id;
+							goTo(id);
 						}}
 					>
 						{text}
@@ -130,7 +182,6 @@
 		max-height: calc(100vh - var(--header-height) - 4rem);
 		overflow-y: auto;
 		padding-right: 0.5rem;
-
 		scrollbar-width: thin;
 		scrollbar-color: var(--border) transparent;
 	}
@@ -155,37 +206,25 @@
 		gap: 2px;
 	}
 
-	.sidebar-item {
-		transition: padding-left 200ms ease;
-	}
-
 	.sidebar-link {
 		display: inline-block;
-		position: relative;
-		font-size: 0.78rem;
-		font-family: var(--font-body);
+		font-size: 0.8rem;
+		font-weight: 500;
 		color: var(--text-muted);
 		text-decoration: none;
-		padding: 0.3rem 0;
+		padding: 0.3rem 0 0.2rem;
 		margin-left: 0.5rem;
-		transition: color var(--transition-fast);
+		border-bottom: 2px solid transparent;
+		transition: none;
 		line-height: 1.4;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		max-width: 100%;
 	}
 
-	.sidebar-link::after {
-		content: '';
-		position: absolute;
-		bottom: 0;
-		left: 0;
-		width: 100%;
-		height: 2px;
-		background: var(--text-primary);
-		transform: scaleX(0);
-		transform-origin: left;
-		transition: transform 0.3s ease;
+	.sidebar-link.sub {
+		font-weight: 400;
 	}
 
 	.sidebar-link:hover {
@@ -194,29 +233,9 @@
 
 	.sidebar-link.active {
 		color: var(--text-primary);
+		border-bottom-color: var(--text-primary);
 	}
 
-	.sidebar-link:hover::after,
-	.sidebar-link.active::after {
-		transform: scaleX(1);
-	}
-
-	/* Level-specific weight differences */
-	.sidebar-link.level-1 {
-		font-weight: 600;
-	}
-	.sidebar-link.level-2 {
-		font-weight: 500;
-	}
-	.sidebar-link.level-3 {
-		font-weight: 400;
-	}
-	.sidebar-link.level-4 {
-		font-weight: 400;
-		font-style: italic;
-	}
-
-	/* Hide on narrow screens */
 	@media (max-width: 1100px) {
 		.section-sidebar {
 			display: none;

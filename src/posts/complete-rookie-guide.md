@@ -13,20 +13,37 @@ This page is for a team that just formed. It covers the competition format, the 
 
 ## 1. The competition
 
-FIRST Tech Challenge is for students in grades 7 through 12. A new game is released each September. Matches are played on a 12 by 12 foot field between two alliances, red and blue, of two teams each.
+FIRST Tech Challenge is for students in grades 7 through 12. A new game is released each September at kickoff.
 
-A match is 2 minutes 30 seconds:
+### This season: BIOBUZZ
 
-- **Autonomous**, 30 seconds. The robot runs on its own.
-- **Driver-controlled**, 2 minutes. Drivers control the robot with controllers. The last 30 seconds is the end game.
+The 2026-2027 game is **BIOBUZZ presented by RTX**, part of the FIRST CANOPY season. It was revealed at kickoff on September 12, 2026.
+
+Two alliances of two teams each play on a field about 144 by 144 inches, made of 36 foam tiles. Robots collect POLLEN and NECTAR, launch them into their alliance's HIVE, and place them into FLOWERS.
+
+- Launching enough scoring elements into a CELL tips the HIVE. Each tip scores points and unlocks more NECTAR.
+- Alliances score by placing their NECTAR in each FLOWER before the other alliance.
+- An alliance owns a FLOWER when its NECTAR is the top piece, which also scores.
+
+POLLEN are 3 inch plastic balls.
+
+### Match format
+
+A match is:
+
+- **Autonomous**, 30 seconds. The robot runs on its own with no driver input.
+- **Transition**, 8 seconds, between autonomous and TeleOp.
+- **Driver-controlled (TeleOp)**, 2 minutes. Drivers control the robot with gamepads.
+
+The Competition Manual has the full scoring and every rule. Read it before designing anything, the summary above leaves most of it out.
 
 ### Season timeline
 
-1. **Kickoff**, early September. The game is revealed and the game manual is published.
-2. **Build season**, September through December. Build, program, practice. Many regions hold scrimmages.
-3. **Qualifiers**, roughly November through February depending on region. Teams play qualification matches, then the top ranked teams pick alliance partners for elimination matches. Winning alliances and award winners advance.
-4. **Regional or state championships**, January through March.
-5. **World Championship**, April, in Houston.
+1. **Kickoff**, September. The game is revealed and the Competition Manual is published.
+2. **Build season**. Build, program, and practice. Many regions hold scrimmages.
+3. **Qualifiers**. Teams play qualification matches, then the top ranked teams pick alliance partners for playoff matches. Winning alliances and award winners advance. Dates vary by region.
+4. **Regional or state championships**.
+5. **FIRST Championship**.
 
 ## 2. Roles
 
@@ -39,9 +56,11 @@ A match is 2 minutes 30 seconds:
 
 On a small team one person covers several roles. Make sure each one is covered.
 
-## 3. The game manual
+## 3. The Competition Manual
 
-FIRST publishes the game manual at kickoff. Read the robot rules, the field rules, and the scoring section before building anything. Robot size and weight limits, allowed parts, and what counts for points are all in there. An illegal robot fails inspection and cannot play.
+FIRST publishes the Competition Manual at kickoff on [ftc-resources.firstinspires.org](https://ftc-resources.firstinspires.org/ftc/game). Read the robot rules, the field rules, and the scoring section before building anything. Robot size limits, allowed parts, and what counts for points are all in there. An illegal robot fails inspection and cannot play.
+
+FIRST also publishes Team Updates during the season that change the manual, so check for new ones. Questions about the rules go through the official Q&A, which for BIOBUZZ opens September 28, 2026. Your team's lead coach account submits them.
 
 ## 4. Hardware
 
@@ -254,7 +273,7 @@ Reset the encoders at init with `STOP_AND_RESET_ENCODER` first. The timeout stop
 Judged awards are based on an interview and the engineering portfolio, a short document that describes the team and the design process. It should include:
 
 - Who is on the team and what each person does.
-- What the team decided to focus on after reading the game manual, and why.
+- What the team decided to focus on after reading the Competition Manual, and why.
 - Design iterations, including ones that did not work and what was learned.
 - Test data.
 - Outreach: events the team ran or attended, who was reached, and what came of it. Several judged awards depend on this, so record it as it happens.

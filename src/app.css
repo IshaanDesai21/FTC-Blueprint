@@ -341,20 +341,21 @@ html.light .prose pre code {
 }
 
 /* Code copy button */
-.code-block-wrapper { position: relative; margin: 1.5rem 0; }
-.code-block-wrapper .prose pre { margin: 0 !important; }
+.prose .code-block-wrapper { position: relative; margin: 1.5rem 0; }
+.prose .code-block-wrapper pre,
+.prose .code-block-wrapper pre[class*='language-'] { margin: 0 !important; }
 
 .copy-btn {
 	position: absolute; top: 0.5rem; right: 0.5rem;
-	padding: 0.4rem; background: var(--bg-card);
-	border: 1px solid var(--border);
-	color: var(--text-muted); cursor: pointer; opacity: 0;
-	transition: opacity var(--transition-fast), color var(--transition-fast);
+	width: 30px; height: 30px;
 	display: flex; align-items: center; justify-content: center;
+	background: var(--bg-card);
+	border: 1px solid var(--border);
+	color: var(--text-muted);
+	cursor: pointer;
 	z-index: 10;
 }
 
-.code-block-wrapper:hover .copy-btn { opacity: 1; }
 .copy-btn:hover { color: var(--text-primary); border-color: var(--text-primary); }
 .copy-btn.copied { color: var(--accent-green); border-color: var(--accent-green); }
 

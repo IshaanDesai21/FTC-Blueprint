@@ -3,11 +3,15 @@
 	import type { Component } from 'svelte';
 	import PortfolioReview from '$lib/components/PortfolioReview.svelte';
 	import { setupCopyButtons } from '$lib/utils/codeCopyButton';
+	import { afterNavigate } from '$app/navigation';
+	import { tick } from 'svelte';
 	import SectionSidebar from '$lib/components/sectionSidebar.svelte';
 
 	let { data }: { data: { content: Component; meta: PostMeta } } = $props();
 
-	$effect(() => {
+	// Article pages are reused between navigations, so add buttons to the new code blocks each time.
+	afterNavigate(async () => {
+		await tick();
 		setupCopyButtons();
 	});
 </script>
@@ -21,12 +25,6 @@
 
 <div class="doc-layout">
 	<article class="doc-main">
-		<nav class="breadcrumbs" aria-label="Breadcrumb">
-			<a href="/">Docs</a>
-			<span class="sep">/</span>
-			<span>Rookie Guide</span>
-		</nav>
-
 		<header class="doc-header">
 			<h1>{data.meta.title}</h1>
 			{#if data.meta.description}
@@ -64,27 +62,9 @@
 		padding: 2rem 0 4rem;
 	}
 
-	.breadcrumbs {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-size: 0.8rem;
-		color: var(--text-muted);
-		margin-bottom: 1.25rem;
-	}
 
-	.breadcrumbs a {
-		color: var(--text-muted);
-		text-decoration: none;
-	}
 
-	.breadcrumbs a:hover {
-		color: var(--text-primary);
-	}
 
-	.breadcrumbs .sep {
-		opacity: 0.5;
-	}
 
 	.doc-header {
 		margin-bottom: 2rem;

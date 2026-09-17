@@ -8,7 +8,7 @@ author: Blueprint
 published: true
 ---
 
-AprilTags are square black and white markers placed on the field. The SDK detects them from a webcam and reports the distance and angle from the camera to each tag. Every tag has an ID, and the field tag positions are listed in the game manual.
+AprilTags are square black and white markers placed on the field. The SDK detects them from a webcam and reports the distance and angle from the camera to each tag. Every tag has an ID, and the field tag positions are listed in the Competition Manual.
 
 The samples are `ConceptAprilTag` for reading tags and `RobotAutoDriveToAprilTagOmni` for driving to one. The code here is from the second.
 
