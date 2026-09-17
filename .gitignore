@@ -25,8 +25,3 @@ vite.config.ts.timestamp-*
 # deploy-later (generated runtime files)
 .deploy-later-run.sh
 .deploy-later.log
-
-# iOS build artifacts (Xcode DerivedData / XcodeGen-generated project)
-Blueprint-iOS/build/
-Blueprint-iOS/Blueprint.xcodeproj/
-Blueprint-iOS/DerivedData/

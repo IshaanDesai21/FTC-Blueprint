@@ -29,7 +29,7 @@ leftDrive.setDirection(DcMotor.Direction.REVERSE);
 rightDrive.setDirection(DcMotor.Direction.FORWARD);
 ```
 
-On a drivetrain, the motors on one side are usually reversed because the axles point in opposite directions. Pushing the left stick forward must make the robot go forward, so set these from your first test drive.
+On a drivetrain, the motors on one side are usually reversed because the axles point in opposite directions. Pushing the left stick forward must make the robot go forward, so set these values from when you test it.
 
 ### Power
 
